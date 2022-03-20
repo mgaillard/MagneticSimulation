@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<scene>
+    <pas>0.0001</pas>
+    <hauteurscene>600</hauteurscene>
+    <largeurscene>600</largeurscene>
+    <xscene>0</xscene>
+    <yscene>0</yscene>
+    <formes>
+        <forme type="cercle">
+            <permeabilite>1.0</permeabilite>
+            <courant>1.0</courant>
+            <centrex>99</centrex>
+            <centrey>300</centrey>
+            <rayon>2.0</rayon>
+        </forme>
+    </formes>
+</scene>
