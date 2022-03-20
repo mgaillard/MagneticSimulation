@@ -2,6 +2,7 @@
 Axis symmetric simulation of magnetic field using finite differences.
 
 ## TODO
+- Add screenshots to the Readme
 - Output the plot of the magnetic field on the line r=0.0
 - Export in Paraview format
 - Draw shapes in the 2D figures with white contours
