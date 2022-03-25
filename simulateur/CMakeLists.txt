@@ -7,6 +7,7 @@ message(STATUS "Creating target 'MagneticSimulation'")
 set(HEADER_FILES
     constants.h
     consoleapplication.h
+    export_vtk.h
     forme.h
     formecercle.h
     formepolygone.h
@@ -23,6 +24,7 @@ set(HEADER_FILES
 
 set(SRC_FILES
     consoleapplication.cpp
+    export_vtk.cpp
     forme.cpp
     formecercle.cpp
     formepolygone.cpp

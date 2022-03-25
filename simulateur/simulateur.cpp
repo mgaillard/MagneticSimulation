@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include "constants.h"
+#include "export_vtk.h"
 
 Simulateur::Simulateur(const QString fichier)
 {
@@ -385,4 +386,12 @@ void Simulateur::enregistrerResultats(const QString &fichierMatriceA, const QStr
         }
         fichier.close();
     }
+
+    // TODO: Transform vectors back to matrices (matricePermittivite, matriceDensiteCourant)
+
+    // Output matrices in VTK format
+    // exportScalarMatrixVtk("mu.vtk", matricePermittivite, scene.getPas(), scene.getPas());
+    // exportScalarMatrixVtk("i.vtk", matriceDensiteCourant, scene.getPas(), scene.getPas());
+	exportScalarMatrixVtk("a.vtk", vecteurSolution, scene.getPas(), scene.getPas());
+    exportVectorMatrixVtk("b.vtk", matriceBr, matriceBz, scene.getPas(), scene.getPas());
 }
