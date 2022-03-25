@@ -58,6 +58,7 @@ target_sources(MagneticSimulation
 
 target_link_libraries(MagneticSimulation 
     PRIVATE
+    OpenMP::OpenMP_CXX
     Qt5::Core
     Qt5::Gui
     Qt5::Xml

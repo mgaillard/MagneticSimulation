@@ -1,5 +1,7 @@
 #include "simulateur.h"
 
+#include <chrono>
+
 #include "constants.h"
 
 Simulateur::Simulateur(const QString fichier)
@@ -289,7 +291,11 @@ void Simulateur::calculVecteurSecondMembre()
 
 void Simulateur::calculSolution()
 {
+    const auto start_time = std::chrono::steady_clock::now();
     vecteurSolution = solveur.calculerSolution(vecteurSecondMembre);
+    const auto end_time = std::chrono::steady_clock::now();
+
+    std::cout << "solving time: " << std::chrono::duration<double, std::milli>(end_time - start_time).count() << " ms" << std::endl;
 }
 
 void Simulateur::calculChampB()
