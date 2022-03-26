@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+#include "shapecircle.h"
+#include "shapepolygon.h"
+
 Scene InterfaceXml::loadFile(const QString& filename)
 {
 	QDomDocument doc;
@@ -22,7 +25,7 @@ Scene InterfaceXml::loadFile(const QString& filename)
 	// Loading the scene
 	const QDomElement elScene = doc.documentElement();
 	Scene scene = loadScene(elScene);
-    FormeList shapes;
+    ShapeList shapes;
 
 	// Loading shapes in the scene
 	QDomElement child = elScene.firstChild().toElement();
@@ -93,7 +96,7 @@ Scene InterfaceXml::loadScene(const QDomElement& elScene)
     return scene;
 }
 
-void InterfaceXml::loadShapes(const QDomElement &elShapes, FormeList &shapes)
+void InterfaceXml::loadShapes(const QDomElement &elShapes, ShapeList &shapes)
 {
     QDomElement child = elShapes.firstChild().toElement();
     while (!child.isNull())
@@ -125,12 +128,12 @@ void InterfaceXml::loadShapes(const QDomElement &elShapes, FormeList &shapes)
     }
 }
 
-bool InterfaceXml::loadShape(const QDomElement &elShape, FormePtr shape)
+bool InterfaceXml::loadShapeCommonAttributes(const QDomElement &elShape, ShapePtr shape)
 {
     // Default values for a shape
     QPoint centre(-1, -1);
-    shape->setPermeabilite(-1);
-    shape->setCourant(0);
+    shape->setPermeability(-1);
+    shape->setCurrent(0);
 
     // Read actual values from the XML
     QDomElement child = elShape.firstChild().toElement();
@@ -138,11 +141,11 @@ bool InterfaceXml::loadShape(const QDomElement &elShape, FormePtr shape)
     {
         if (child.tagName() == "permeabilite")
         {
-            shape->setPermeabilite(child.text().toDouble());
+            shape->setPermeability(child.text().toDouble());
         }
         else if (child.tagName() == "courant")
         {
-            shape->setCourant(child.text().toDouble());
+            shape->setCurrent(child.text().toDouble());
         }
         else if (child.tagName() == "centrex")
         {
@@ -155,9 +158,9 @@ bool InterfaceXml::loadShape(const QDomElement &elShape, FormePtr shape)
         child = child.nextSiblingElement();
     }
 
-    if (centre.x() >= 0 && centre.y() >= 0 && shape->getPermeabilite() >= 0)
+    if (centre.x() >= 0 && centre.y() >= 0 && shape->getPermeability() >= 0)
     {
-        shape->setCentre(centre);
+        shape->setCenter(centre);
 
     	// Shape was successfully loaded
         return true;
@@ -167,14 +170,14 @@ bool InterfaceXml::loadShape(const QDomElement &elShape, FormePtr shape)
     return false;
 }
 
-FormePtr InterfaceXml::loadShapeCircle(const QDomElement& elCircle)
+ShapePtr InterfaceXml::loadShapeCircle(const QDomElement& elCircle)
 {
-    auto circle = std::make_shared<FormeCercle>(QPoint(-1, -1), -1);
+    auto circle = std::make_shared<ShapeCircle>(QPoint(-1, -1), -1);
 
 	// Load attributes common to all types of shapes
-	const bool res = loadShape(elCircle, circle);
+	const bool success = loadShapeCommonAttributes(elCircle, circle);
 
-	if (res)
+	if (success)
 	{
 		// Loading circle attributes
 		QDomElement child = elCircle.firstChild().toElement();
@@ -182,13 +185,13 @@ FormePtr InterfaceXml::loadShapeCircle(const QDomElement& elCircle)
 		{
 			if (child.tagName() == "rayon")
 			{
-				circle->setRayon(child.text().toDouble());
+				circle->setRadius(child.text().toDouble());
 			}
 			child = child.nextSiblingElement();
 		}
 
 		// Check the radius
-		if (circle->getRayon() >= 0)
+		if (circle->getRadius() >= 0)
 		{
 			return circle;
 		}
@@ -197,14 +200,14 @@ FormePtr InterfaceXml::loadShapeCircle(const QDomElement& elCircle)
 	return nullptr;
 }
 
-FormePtr InterfaceXml::loadShapePolygon(const QDomElement& elPolygon)
+ShapePtr InterfaceXml::loadShapePolygon(const QDomElement& elPolygon)
 {
-    auto polygon = std::make_shared<FormePolygone>(QPoint(-1, -1), QPolygon());
+    auto polygon = std::make_shared<ShapePolygon>(QPoint(-1, -1), QPolygon());
 
 	// Load attributes common to all types of shapes
-	const bool res = loadShape(elPolygon, polygon);
+	const bool success = loadShapeCommonAttributes(elPolygon, polygon);
 
-	if (res)
+	if (success)
 	{
 		// Load polygon attributes
 		QList<int> pointsX;
@@ -237,8 +240,8 @@ FormePtr InterfaceXml::loadShapePolygon(const QDomElement& elPolygon)
 				points.append(QPoint(pointsX.at(i), pointsY.at(i)));
 			}
 
-			polygon->setPolygone(QPolygon(points));
-			polygon->miseAJourCentre();
+			polygon->setPolygon(QPolygon(points));
+			polygon->updateCenter();
 
 			return polygon;
 		}

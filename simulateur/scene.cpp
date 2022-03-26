@@ -46,12 +46,12 @@ double Scene::getSqPas() const
     return m_pas * m_pas;
 }
 
-void Scene::setShapes(const FormeList& shapes)
+void Scene::setShapes(const ShapeList& shapes)
 {
     m_shapes = shapes;
 }
 
-const FormeList& Scene::getShapes() const
+const ShapeList& Scene::getShapes() const
 {
     return m_shapes;
 }

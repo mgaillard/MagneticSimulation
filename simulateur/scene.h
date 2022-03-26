@@ -3,7 +3,7 @@
 #include <QRect>
 #include <QList>
 
-#include "forme.h"
+#include "shape.h"
 
 class Scene
 {
@@ -20,11 +20,11 @@ public:
     const double& getPas() const;
     double getSqPas() const;
 
-    void setShapes(const FormeList& shapes);
-    const FormeList& getShapes() const;
+    void setShapes(const ShapeList& shapes);
+    const ShapeList& getShapes() const;
 
 private:
     QRect m_rectangleScene;
     double m_pas;
-    FormeList m_shapes;
+    ShapeList m_shapes;
 };

@@ -63,13 +63,13 @@ void Simulateur::remplirMatricePermittivite()
         {
             QPoint point(j, i);
 
-            FormeList::iterator f;
+            ShapeList::iterator f;
             for (const auto& shape : scene.getShapes())
             {
-                if (shape->collision(point))
+                if (shape->isInside(point))
                 {
                     // sur chaque coefficient, on multiplie la permeabilite de ce milieu par la permeabilite relative de la forme
-                    matricePermittivite(i, j) *= shape->getPermeabilite();
+                    matricePermittivite(i, j) *= shape->getPermeability();
                 }
             }
         }
@@ -152,7 +152,7 @@ void Simulateur::remplirMatriceDensiteCourant()
     for (const auto& shape : scene.getShapes())
     {
         // Surface in number of cells
-        const auto surfaceInCells = shape->getSurface(scene.getRectangleScene());
+        const auto surfaceInCells = shape->computeSurface(scene.getRectangleScene());
         // Surface in meters
         const auto surfaceInMeters = static_cast<double>(surfaceInCells) * scene.getSqPas();
 
@@ -169,10 +169,10 @@ void Simulateur::remplirMatriceDensiteCourant()
 
             for (unsigned int k = 0; k < scene.getShapes().size(); k++)
             {
-                if (scene.getShapes()[k]->collision(point))
+                if (scene.getShapes()[k]->isInside(point))
                 {
                     // The current density in the cell is the current in ampere divided by the surface in meters
-                    matriceDensiteCourant(i, j) += scene.getShapes()[k]->getCourant() / surfaces[k];
+                    matriceDensiteCourant(i, j) += scene.getShapes()[k]->getCurrent() / surfaces[k];
                 }
             }
         }

@@ -8,12 +8,12 @@ set(HEADER_FILES
     constants.h
     consoleapplication.h
     export_vtk.h
-    forme.h
-    formecercle.h
-    formepolygone.h
     interfacexml.h
     renduimage.h
     scene.h
+    shape.h
+    shapecircle.h
+    shapepolygon.h
     simulateur.h
     solveur.h
     solveurcolpivhouseholderqr.h
@@ -25,13 +25,13 @@ set(HEADER_FILES
 set(SRC_FILES
     consoleapplication.cpp
     export_vtk.cpp
-    forme.cpp
-    formecercle.cpp
-    formepolygone.cpp
     interfacexml.cpp
     main.cpp
     renduimage.cpp
     scene.cpp
+    shape.cpp
+    shapecircle.cpp
+    shapepolygon.cpp
     simulateur.cpp
     simulateur.cpp
     solveur.cpp

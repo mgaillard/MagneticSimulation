@@ -9,8 +9,8 @@
 #include <fstream>
 
 #include "scene.h"
-#include "forme.h"
-#include "formecercle.h"
+#include "shape.h"
+#include "ShapeCircle.h"
 #include "interfacexml.h"
 #include "renduimage.h"
 #include "solveursparselu.h"
