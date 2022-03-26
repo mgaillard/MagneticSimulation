@@ -105,7 +105,7 @@ void InterfaceXml::loadShapes(const QDomElement &elShapes, ShapeList &shapes)
         {
             if (child.attribute("type") == "cercle")
             {
-                const auto circle = loadShapeCircle(child);
+                auto circle = loadShapeCircle(child);
 
             	if (circle)
                 {
@@ -115,7 +115,7 @@ void InterfaceXml::loadShapes(const QDomElement &elShapes, ShapeList &shapes)
             }
             else if (child.attribute("type") == "polygone")
             {
-                const auto polygon = loadShapePolygon(child);
+                auto polygon = loadShapePolygon(child);
 
             	if (polygon)
                 {
