@@ -19,11 +19,9 @@
 class Simulateur
 {
 public:
-    Simulateur(const QString fichier);
-    ~Simulateur();
-    FormeList& getFormes();
+    Simulateur(const QString& filename);
     void initialiser();
-    bool validationSimulation();
+    bool validationSimulation() const;
     void simuler();
     void remplirMatricePermittivite();
     void lissageMatricePermittivite();
@@ -39,7 +37,6 @@ public:
     void enregistrerResultats(const QString &fichierMatriceA, const QString &fichierMatriceBr, const QString &fichierMatriceBz, const QString &fichierMatriceB);
 private:
     Scene scene;
-    FormeList formes;
     //variables de la simulation
     Eigen::MatrixXd matricePermittivite;
     Eigen::MatrixXd matriceDensiteCourant;

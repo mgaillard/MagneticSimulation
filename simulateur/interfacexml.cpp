@@ -107,7 +107,7 @@ void InterfaceXml::loadShapes(const QDomElement &elShapes, FormeList &shapes)
             	if (circle)
                 {
                     // If successfully loaded, add the circle to shapes
-                    shapes.append(circle);
+                    shapes.push_back(std::move(circle));
                 }
             }
             else if (child.attribute("type") == "polygone")
@@ -117,7 +117,7 @@ void InterfaceXml::loadShapes(const QDomElement &elShapes, FormeList &shapes)
             	if (polygon)
                 {
                     // If successfully loaded, add the polygon to shapes
-                    shapes.append(polygon);
+                    shapes.push_back(std::move(polygon));
                 }
             }
         }
@@ -125,7 +125,7 @@ void InterfaceXml::loadShapes(const QDomElement &elShapes, FormeList &shapes)
     }
 }
 
-bool InterfaceXml::loadShape(const QDomElement &elShape, Forme* shape)
+bool InterfaceXml::loadShape(const QDomElement &elShape, FormePtr shape)
 {
     // Default values for a shape
     QPoint centre(-1, -1);
@@ -167,9 +167,9 @@ bool InterfaceXml::loadShape(const QDomElement &elShape, Forme* shape)
     return false;
 }
 
-Forme* InterfaceXml::loadShapeCircle(const QDomElement& elCircle)
+FormePtr InterfaceXml::loadShapeCircle(const QDomElement& elCircle)
 {
-    FormeCercle* circle = new FormeCercle(QPoint(-1, -1), -1);
+    auto circle = std::make_shared<FormeCercle>(QPoint(-1, -1), -1);
 
 	// Load attributes common to all types of shapes
 	const bool res = loadShape(elCircle, circle);
@@ -197,9 +197,9 @@ Forme* InterfaceXml::loadShapeCircle(const QDomElement& elCircle)
 	return nullptr;
 }
 
-Forme* InterfaceXml::loadShapePolygon(const QDomElement& elPolygon)
+FormePtr InterfaceXml::loadShapePolygon(const QDomElement& elPolygon)
 {
-    FormePolygone* polygon = new FormePolygone(QPoint(-1, -1), QPolygon());
+    auto polygon = std::make_shared<FormePolygone>(QPoint(-1, -1), QPolygon());
 
 	// Load attributes common to all types of shapes
 	const bool res = loadShape(elPolygon, polygon);

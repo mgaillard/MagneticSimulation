@@ -5,23 +5,10 @@
 #include "constants.h"
 #include "export_vtk.h"
 
-Simulateur::Simulateur(const QString fichier)
+Simulateur::Simulateur(const QString& filename)
 {
     // Load simulation definition file
-    scene = InterfaceXml::loadFile(fichier);
-    formes = scene.getShapes();
-}
-
-Simulateur::~Simulateur()
-{
-    qDeleteAll(formes);
-    formes.clear();
-}
-
-
-FormeList& Simulateur::getFormes()
-{
-    return formes;
+    scene = InterfaceXml::loadFile(filename);
 }
 
 void Simulateur::initialiser()
@@ -39,13 +26,14 @@ void Simulateur::initialiser()
     solveur.setSize(scene.resolutionHeight(), scene.resolutionWidth());
 }
 
-bool Simulateur::validationSimulation()
+bool Simulateur::validationSimulation() const
 {
-    //pour pouvoir simuler il faut qu'il y ait des formes
-    if (formes.size() <= 0)
+    // Check that there is at least one shape in the simulation
+    if (scene.getShapes().size() <= 0)
     {
         return false;
     }
+
     return true;
 }
 
@@ -69,23 +57,30 @@ void Simulateur::remplirMatricePermittivite()
     const int nbLigne = scene.resolutionHeight();
     const int nbColonne = scene.resolutionWidth();
 
-    for (int i = 0; i < nbLigne; i++) {
-        for (int j = 0; j < nbColonne; j++) {
+    for (int i = 0; i < nbLigne; i++)
+    {
+        for (int j = 0; j < nbColonne; j++)
+        {
             QPoint point(j, i);
+
             FormeList::iterator f;
-            for (f = formes.begin(); f != formes.end(); ++f)
+            for (const auto& shape : scene.getShapes())
             {
-                if ((*f)->collision(point)) {
+                if (shape->collision(point))
+                {
                     // sur chaque coefficient, on multiplie la permeabilite de ce milieu par la permeabilite relative de la forme
-                    matricePermittivite(i, j) *= (*f)->getPermeabilite();
+                    matricePermittivite(i, j) *= shape->getPermeabilite();
                 }
             }
         }
     }
+
     //on inverse les coefficients de la matrice
-    for (int i = 0; i < nbLigne; i++) {
-        for (int j = 0; j < nbColonne; j++) {
-            matricePermittivite(i, j) = 1.0/matricePermittivite(i, j);
+    for (int i = 0; i < nbLigne; i++)
+    {
+        for (int j = 0; j < nbColonne; j++)
+        {
+            matricePermittivite(i, j) = 1.0 / matricePermittivite(i, j);
         }
     }
 }
@@ -149,34 +144,40 @@ void Simulateur::lissageMatricePermittivite()
 
 void Simulateur::remplirMatriceDensiteCourant()
 {
-    int nbLigne = scene.resolutionHeight();
-    int nbColonne = scene.resolutionWidth();
-    //on genere un tableau des surfaces des formes
-    QVector<double> surfaces;
-    FormeList::iterator f;
-    for (f = formes.begin(); f != formes.end(); ++f)
+    const int rows = scene.resolutionHeight();
+    const int cols = scene.resolutionWidth();
+
+	// This table contains the surface of all shapes in the scene
+    std::vector<double> surfaces;
+    for (const auto& shape : scene.getShapes())
     {
         // Surface in number of cells
-        const auto surfaceInCells = (*f)->getSurface(scene.getRectangleScene());
+        const auto surfaceInCells = shape->getSurface(scene.getRectangleScene());
         // Surface in meters
-        const auto surfaceInMeters = static_cast<double>(surfaceInCells) * scene.getPas() * scene.getPas();
-        surfaces.append(surfaceInMeters);
+        const auto surfaceInMeters = static_cast<double>(surfaceInCells) * scene.getSqPas();
+
+        surfaces.push_back(surfaceInMeters);
     }
-    //on remplis la matrice des densite de courant
-    for (int i = 0; i < nbLigne; i++) {
-        for (int j = 0; j < nbColonne; j++) {
-            QPoint point(j, i);
-            for (f = formes.begin(); f != formes.end(); ++f)
+
+    // Fill the matrix of density of currents
+    // For each cell of the simulation check if it is encompassed by one of the shape in the scene
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            const QPoint point(j, i);
+
+            for (unsigned int k = 0; k < scene.getShapes().size(); k++)
             {
-                if ((*f)->collision(point)) {
+                if (scene.getShapes()[k]->collision(point))
+                {
                     // The current density in the cell is the current in ampere divided by the surface in meters
-                    matriceDensiteCourant(i, j) += (*f)->getCourant()/surfaces.at((int)(f - formes.begin()));
+                    matriceDensiteCourant(i, j) += scene.getShapes()[k]->getCourant() / surfaces[k];
                 }
             }
         }
     }
 }
-
 
 void Simulateur::calculMatricesDerivees()
 {

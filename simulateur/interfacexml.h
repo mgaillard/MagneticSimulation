@@ -15,8 +15,8 @@ public:
 private:
     static Scene loadScene(const QDomElement& elScene);
 	static void loadShapes(const QDomElement &elShapes, FormeList &shapes);
-    static bool loadShape(const QDomElement &elShape, Forme* shape);
-    static Forme* loadShapeCircle(const QDomElement &elCircle);
-    static Forme* loadShapePolygon(const QDomElement &elPolygon);
+    static bool loadShape(const QDomElement &elShape, FormePtr shape);
+    static FormePtr loadShapeCircle(const QDomElement &elCircle);
+    static FormePtr loadShapePolygon(const QDomElement &elPolygon);
     static void loadPoints(const QDomElement& elPoints, const QString& tagName, QList<int>& points);
 };

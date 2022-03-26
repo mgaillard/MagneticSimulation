@@ -1,9 +1,10 @@
-#ifndef FORME_H
-#define FORME_H
+#pragma once
+
+#include <memory>
+#include <vector>
 
 #include <QPoint>
 #include <QRect>
-#include <algorithm>
 
 class Forme
 {
@@ -27,6 +28,5 @@ private:
     double courant;
 };
 
-using FormeList = QList<Forme*>;
-
-#endif // FORME_H
+using FormePtr = std::shared_ptr<Forme>;
+using FormeList = std::vector<FormePtr>;
