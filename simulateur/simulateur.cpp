@@ -7,10 +7,9 @@
 
 Simulateur::Simulateur(const QString fichier)
 {
-    //on charge le fichier
-    InterfaceXml interface;
-    interface.chargerFichier(fichier, scene, formes);
-    initialiser();
+    // Load simulation definition file
+    scene = InterfaceXml::loadFile(fichier);
+    formes = scene.getShapes();
 }
 
 Simulateur::~Simulateur()
@@ -20,7 +19,7 @@ Simulateur::~Simulateur()
 }
 
 
-QList<Forme*>& Simulateur::getFormes()
+FormeList& Simulateur::getFormes()
 {
     return formes;
 }
@@ -73,7 +72,7 @@ void Simulateur::remplirMatricePermittivite()
     for (int i = 0; i < nbLigne; i++) {
         for (int j = 0; j < nbColonne; j++) {
             QPoint point(j, i);
-            QList<Forme*>::iterator f;
+            FormeList::iterator f;
             for (f = formes.begin(); f != formes.end(); ++f)
             {
                 if ((*f)->collision(point)) {
@@ -154,7 +153,7 @@ void Simulateur::remplirMatriceDensiteCourant()
     int nbColonne = scene.resolutionWidth();
     //on genere un tableau des surfaces des formes
     QVector<double> surfaces;
-    QList<Forme*>::iterator f;
+    FormeList::iterator f;
     for (f = formes.begin(); f != formes.end(); ++f)
     {
         // Surface in number of cells

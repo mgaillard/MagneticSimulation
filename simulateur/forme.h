@@ -27,4 +27,6 @@ private:
     double courant;
 };
 
+using FormeList = QList<Forme*>;
+
 #endif // FORME_H

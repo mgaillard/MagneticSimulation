@@ -1,7 +1,7 @@
 #include "scene.h"
 
 Scene::Scene() :
-	m_rectangleScene(0, 0, 0, 0),
+	m_rectangleScene(0, 0, -1, -1),
 	m_pas(0.0)
 {
 }
@@ -44,4 +44,14 @@ const double& Scene::getPas() const
 double Scene::getSqPas() const
 {
     return m_pas * m_pas;
+}
+
+void Scene::setShapes(const FormeList& shapes)
+{
+    m_shapes = shapes;
+}
+
+const FormeList& Scene::getShapes() const
+{
+    return m_shapes;
 }

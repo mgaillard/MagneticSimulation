@@ -1,10 +1,6 @@
-#ifndef INTERFACEXML_H
-#define INTERFACEXML_H
+#pragma once
 
 #include <QtXml>
-#include <QList>
-#include <algorithm>
-#include <iostream>
 
 #include "forme.h"
 #include "formecercle.h"
@@ -14,14 +10,13 @@
 class InterfaceXml
 {
 public:
-    InterfaceXml();
-    void chargerFichier(const QString &fichier, Scene &scene, QList<Forme*> &formes);
-    void chargerFormes(QDomElement &elFormes, QList<Forme*> &formes);
-    Scene chargerScene(QDomElement &elScene);
-    bool chargerForme(QDomElement &elForme, Forme* forme);
-    bool chargerFormeCercle(QDomElement &elCercle, FormeCercle* cercle);
-    bool chargerFormePolygone(QDomElement &elPolygone, FormePolygone* polygone);
-    void chargerPoints(QDomElement &elPoints, const QString &nomBalise, QList<int> &points);
-};
+    static Scene loadFile(const QString &filename);
 
-#endif // INTERFACEXML_H
+private:
+    static Scene loadScene(const QDomElement& elScene);
+	static void loadShapes(const QDomElement &elShapes, FormeList &shapes);
+    static bool loadShape(const QDomElement &elShape, Forme* shape);
+    static Forme* loadShapeCircle(const QDomElement &elCircle);
+    static Forme* loadShapePolygon(const QDomElement &elPolygon);
+    static void loadPoints(const QDomElement& elPoints, const QString& tagName, QList<int>& points);
+};

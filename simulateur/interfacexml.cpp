@@ -1,81 +1,57 @@
 #include "interfacexml.h"
 
-InterfaceXml::InterfaceXml()
+#include <iostream>
+
+Scene InterfaceXml::loadFile(const QString& filename)
 {
+	QDomDocument doc;
+	QFile xmlDoc(filename);
+
+	if (!xmlDoc.open(QIODevice::ReadOnly))
+	{
+		std::cerr << "The XML document could not be opened." << std::endl;
+		return {};
+	}
+	if (!doc.setContent(&xmlDoc))
+	{
+		xmlDoc.close();
+		std::cerr << "The XML document could not be attributed to the QDomDocument object." << std::endl;
+		return {};
+	}
+
+	// Loading the scene
+	const QDomElement elScene = doc.documentElement();
+	Scene scene = loadScene(elScene);
+    FormeList shapes;
+
+	// Loading shapes in the scene
+	QDomElement child = elScene.firstChild().toElement();
+	while (!child.isNull())
+	{
+		if (child.tagName() == "formes")
+		{
+			loadShapes(child, shapes);
+		}
+		child = child.nextSiblingElement();
+	}
+	xmlDoc.close();
+
+    scene.setShapes(shapes);
+
+    return scene;
 }
 
-void InterfaceXml::chargerFichier(const QString &fichier, Scene &scene, QList<Forme*> &formes)
-{
-    //on ouvre le fichier xml
-    QDomDocument doc;
-    QFile xml_doc(fichier);
-    if(!xml_doc.open(QIODevice::ReadOnly))
-    {
-        std::cout << "Le document XML n'a pas pu être ouvert. Vérifiez que le nom est le bon et que le document est bien placé" << std::endl;
-        return;
-    }
-    if (!doc.setContent(&xml_doc))
-    {
-        xml_doc.close();
-        std::cout << "Le document XML n'a pas pu être attribué à l'objet QDomDocument." << std::endl;
-        return;
-    }
-
-    QDomElement elScene = doc.documentElement();
-    //on charge la scene
-    scene = chargerScene(elScene);
-    QDomElement child = elScene.firstChild().toElement();
-    while (!child.isNull())
-    {
-        if (child.tagName() == "formes")
-        {
-            chargerFormes(child, formes);
-        }
-        child = child.nextSiblingElement();
-    }
-    xml_doc.close();
-}
-
-
-void InterfaceXml::chargerFormes(QDomElement &elFormes, QList<Forme*> &formes)
-{
-    QDomElement child = elFormes.firstChild().toElement();
-    while (!child.isNull())
-    {
-        if (child.tagName() == "forme")
-        {
-            if (child.attribute("type") == "cercle")
-            {
-                FormeCercle* cercle = new FormeCercle(QPoint(-1, -1), -1);
-                bool chargement = chargerFormeCercle(child, cercle);
-                if (chargement)//si le chargement s'est passe sans erreur
-                {
-                    formes.append(cercle);//on ajoute le cercle aux formes
-                }
-            }
-            else if (child.attribute("type") == "polygone")
-            {
-                FormePolygone* polygone = new FormePolygone(QPoint(-1, -1), QPolygon());
-                bool chargement = chargerFormePolygone(child, polygone);
-                if (chargement)//si le chargement s'est passe sans erreur
-                {
-                    formes.append(polygone);//on ajoute le polyone aux formes
-                }
-            }
-        }
-        child = child.nextSiblingElement();
-    }
-}
-
-Scene InterfaceXml::chargerScene(QDomElement &elScene)
+Scene InterfaceXml::loadScene(const QDomElement& elScene)
 {
     Scene scene;
-    float pas = -1;
-    int hauteur = -1;
-    int largeur = -1;
+
+    double pas = 0.0;
+    int height = -1;
+    int width = -1;
     int x = -1;
     int y = -1;
-    //on lit les informations dans le xml
+
+    // Read information from XML file
     QDomElement child = elScene.firstChild().toElement();
     while (!child.isNull())
     {
@@ -85,11 +61,11 @@ Scene InterfaceXml::chargerScene(QDomElement &elScene)
         }
         else if (child.tagName() == "hauteurscene")
         {
-            hauteur = child.text().toInt();
+            height = child.text().toInt();
         }
         else if (child.tagName() == "largeurscene")
         {
-            largeur = child.text().toInt();
+            width = child.text().toInt();
         }
         else if (child.tagName() == "xscene")
         {
@@ -101,37 +77,72 @@ Scene InterfaceXml::chargerScene(QDomElement &elScene)
         }
         child = child.nextSiblingElement();
     }
-    //on verifie que toutes les informations sont correctes et on retourne une Scene
-    if (pas >= 0 && hauteur >= 0 && largeur >= 0 && x >= 0 && y >= 0)
+
+    // Check that information is valid
+    if (pas >= 0 && height >= 0 && width >= 0 && x >= 0 && y >= 0)
     {
-        QRect rectangleScene(x, y, largeur, hauteur);
+        const QRect rectangleScene(x, y, width, height);
         scene.setRectangleScene(rectangleScene);
         scene.setPas(pas);
     }
     else
     {
-        std::cout << "scene non conforme : xml errone." << std::endl;
+        std::cerr << "XML error: The scene is not valid" << std::endl;
     }
+
     return scene;
 }
 
-bool InterfaceXml::chargerForme(QDomElement &elForme, Forme* forme)
+void InterfaceXml::loadShapes(const QDomElement &elShapes, FormeList &shapes)
 {
-    //valeurs par defaut pour la forme
+    QDomElement child = elShapes.firstChild().toElement();
+    while (!child.isNull())
+    {
+        if (child.tagName() == "forme")
+        {
+            if (child.attribute("type") == "cercle")
+            {
+                const auto circle = loadShapeCircle(child);
+
+            	if (circle)
+                {
+                    // If successfully loaded, add the circle to shapes
+                    shapes.append(circle);
+                }
+            }
+            else if (child.attribute("type") == "polygone")
+            {
+                const auto polygon = loadShapePolygon(child);
+
+            	if (polygon)
+                {
+                    // If successfully loaded, add the polygon to shapes
+                    shapes.append(polygon);
+                }
+            }
+        }
+        child = child.nextSiblingElement();
+    }
+}
+
+bool InterfaceXml::loadShape(const QDomElement &elShape, Forme* shape)
+{
+    // Default values for a shape
     QPoint centre(-1, -1);
-    forme->setPermeabilite(-1);
-    forme->setCourant(0);
-    //on explore l'arbre pour completer les donnees de la forme
-    QDomElement child = elForme.firstChild().toElement();
+    shape->setPermeabilite(-1);
+    shape->setCourant(0);
+
+    // Read actual values from the XML
+    QDomElement child = elShape.firstChild().toElement();
     while (!child.isNull())
     {
         if (child.tagName() == "permeabilite")
         {
-            forme->setPermeabilite(child.text().toDouble());
+            shape->setPermeabilite(child.text().toDouble());
         }
         else if (child.tagName() == "courant")
         {
-            forme->setCourant(child.text().toDouble());
+            shape->setCourant(child.text().toDouble());
         }
         else if (child.tagName() == "centrex")
         {
@@ -144,87 +155,108 @@ bool InterfaceXml::chargerForme(QDomElement &elForme, Forme* forme)
         child = child.nextSiblingElement();
     }
 
-    if (centre.x() >= 0 && centre.y() >= 0 && forme->getPermeabilite() >= 0)
+    if (centre.x() >= 0 && centre.y() >= 0 && shape->getPermeabilite() >= 0)
     {
-        forme->setCentre(centre);
-        //on signale que la forme a ete correctement chargee
+        shape->setCentre(centre);
+
+    	// Shape was successfully loaded
         return true;
     }
-    //il manque des donnees, on signale que la forme a mal ete chargee
+
+    // Shape could not be loaded properly
     return false;
 }
 
-bool InterfaceXml::chargerFormeCercle(QDomElement &elCercle, FormeCercle* cercle)
+Forme* InterfaceXml::loadShapeCircle(const QDomElement& elCircle)
 {
-    bool chargementForme = chargerForme(elCercle, cercle);//on commence par charger les attributs communs a toutes les formes.
-    if (chargementForme)
-    {
-        //on charge les attributs propres aux cercles.
-        QDomElement child = elCercle.firstChild().toElement();
-        while (!child.isNull())
-        {
-            if (child.tagName() == "rayon")
-            {
-                cercle->setRayon(child.text().toDouble());
-            }
-            child = child.nextSiblingElement();
-        }
-        //si le rayon est correctement entre on signale que la forme est valide.
-        if (cercle->getRayon() >= 0)
-        {
-            return true;
-        }
-    }
-    return false;
+    FormeCercle* circle = new FormeCercle(QPoint(-1, -1), -1);
+
+	// Load attributes common to all types of shapes
+	const bool res = loadShape(elCircle, circle);
+
+	if (res)
+	{
+		// Loading circle attributes
+		QDomElement child = elCircle.firstChild().toElement();
+		while (!child.isNull())
+		{
+			if (child.tagName() == "rayon")
+			{
+				circle->setRayon(child.text().toDouble());
+			}
+			child = child.nextSiblingElement();
+		}
+
+		// Check the radius
+		if (circle->getRayon() >= 0)
+		{
+			return circle;
+		}
+	}
+
+	return nullptr;
 }
 
-bool InterfaceXml::chargerFormePolygone(QDomElement &elPolygone, FormePolygone* polygone)
+Forme* InterfaceXml::loadShapePolygon(const QDomElement& elPolygon)
 {
-    bool chargementForme = chargerForme(elPolygone, polygone);//on commence par charger les attributs communs a toutes les formes.
-    if (chargementForme)
-    {
-        //on charge les attributs propres aux polygones.
-        QList<int> xpoints;
-        QList<int> ypoints;
-        QDomElement child = elPolygone.firstChild().toElement();
-        while (!child.isNull())
-        {
-            if (child.tagName() == "xpoints")
-            {
-                chargerPoints(child, QString("x"), xpoints);
-            }
-            else if(child.tagName() == "ypoints")
-            {
-                chargerPoints(child, QString("y"), ypoints);
-            }
-            child = child.nextSiblingElement();
-        }
-        //on a la liste des coordonnees sur x et y, on transforme ca en points.
-        if (xpoints.size() > 2 && ypoints.size() > 2)//il faut au moins trois points pour faire un polygone
-        {
-            QVector<QPoint> points;
-            int nombrePoints = std::min(xpoints.size(), ypoints.size());
-            for (int i = 0;i < nombrePoints;i++)
-            {
-                points.append(QPoint(xpoints.at(i), ypoints.at(i)));
-            }
-            polygone->setPolygone(QPolygon(points));
-            polygone->miseAJourCentre();
-            return true;
-        }
-    }
-    return false;
+    FormePolygone* polygon = new FormePolygone(QPoint(-1, -1), QPolygon());
+
+	// Load attributes common to all types of shapes
+	const bool res = loadShape(elPolygon, polygon);
+
+	if (res)
+	{
+		// Load polygon attributes
+		QList<int> pointsX;
+		QList<int> pointsY;
+
+		QDomElement child = elPolygon.firstChild().toElement();
+		while (!child.isNull())
+		{
+			if (child.tagName() == "xpoints")
+			{
+				loadPoints(child, "x", pointsX);
+			}
+			else if (child.tagName() == "ypoints")
+			{
+				loadPoints(child, "y", pointsY);
+			}
+			child = child.nextSiblingElement();
+		}
+
+		// Convert the two lists into one list of 2D points
+		// At least two points are needed for a polygon
+		if (pointsX.size() > 2 && pointsY.size() > 2)
+		{
+			QVector<QPoint> points;
+
+			const int nbPoints = std::min(pointsX.size(), pointsY.size());
+
+			for (int i = 0; i < nbPoints; i++)
+			{
+				points.append(QPoint(pointsX.at(i), pointsY.at(i)));
+			}
+
+			polygon->setPolygone(QPolygon(points));
+			polygon->miseAJourCentre();
+
+			return polygon;
+		}
+	}
+
+    return nullptr;
 }
 
-void InterfaceXml::chargerPoints(QDomElement &elPoints, const QString &nomBalise, QList<int> &points)
+void InterfaceXml::loadPoints(const QDomElement& elPoints, const QString& tagName, QList<int>& points)
 {
-    QDomElement child = elPoints.firstChild().toElement();
-    while (!child.isNull())
-    {
-        if (child.tagName() == nomBalise)
-        {
-            points.append(child.text().toInt());
-        }
-        child = child.nextSiblingElement();
-    }
+	QDomElement child = elPoints.firstChild().toElement();
+
+	while (!child.isNull())
+	{
+		if (child.tagName() == tagName)
+		{
+			points.append(child.text().toInt());
+		}
+		child = child.nextSiblingElement();
+	}
 }
