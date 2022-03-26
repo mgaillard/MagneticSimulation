@@ -28,16 +28,16 @@ QList<Forme*>& Simulateur::getFormes()
 void Simulateur::initialiser()
 {
     //on initialise les matrices
-    matricePermittivite = Eigen::MatrixXd::Constant(scene.getRectangleScene().height(), scene.getRectangleScene().width(), constants::mu_0);
-    matriceDensiteCourant = Eigen::MatrixXd::Constant(scene.getRectangleScene().height(), scene.getRectangleScene().width(), 0.0);
-    matriceDeriveeZ = Eigen::MatrixXd::Constant(scene.getRectangleScene().height(), scene.getRectangleScene().width(), 0.0);
-    matriceDeriveeR = Eigen::MatrixXd::Constant(scene.getRectangleScene().height(), scene.getRectangleScene().width(), 0.0);
-    vecteurSecondMembre = Eigen::MatrixXd::Constant(scene.getRectangleScene().height()*scene.getRectangleScene().width(), 1, 0.0);
-    vecteurSolution = Eigen::MatrixXd::Constant(scene.getRectangleScene().height()*scene.getRectangleScene().width(), 1, 0.0);
-    matriceBr = Eigen::MatrixXd::Constant(scene.getRectangleScene().height(), scene.getRectangleScene().width(), 0.0);
-    matriceBz = Eigen::MatrixXd::Constant(scene.getRectangleScene().height(), scene.getRectangleScene().width(), 0.0);
-    matriceB = Eigen::MatrixXd::Constant(scene.getRectangleScene().height(), scene.getRectangleScene().width(), 0.0);
-    solveur.setSize(scene.getRectangleScene().height(), scene.getRectangleScene().width());
+    matricePermittivite = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), constants::mu_0);
+    matriceDensiteCourant = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), 0.0);
+    matriceDeriveeZ = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), 0.0);
+    matriceDeriveeR = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), 0.0);
+    vecteurSecondMembre = Eigen::MatrixXd::Constant(scene.resolutionTotal(), 1, 0.0);
+    vecteurSolution = Eigen::MatrixXd::Constant(scene.resolutionTotal(), 1, 0.0);
+    matriceBr = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), 0.0);
+    matriceBz = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), 0.0);
+    matriceB = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), 0.0);
+    solveur.setSize(scene.resolutionHeight(), scene.resolutionWidth());
 }
 
 bool Simulateur::validationSimulation()
@@ -67,8 +67,8 @@ void Simulateur::simuler()
 
 void Simulateur::remplirMatricePermittivite()
 {
-    const int nbLigne = scene.getRectangleScene().height();
-    const int nbColonne = scene.getRectangleScene().width();
+    const int nbLigne = scene.resolutionHeight();
+    const int nbColonne = scene.resolutionWidth();
 
     for (int i = 0; i < nbLigne; i++) {
         for (int j = 0; j < nbColonne; j++) {
@@ -109,8 +109,8 @@ void Simulateur::lissageMatricePermittivite()
     //on divise les coefficients du filtre par la somme des coefficients
     filtre /= sommeCoeffsFiltre;
     //on effectue le filtrage
-    int nbLigne = scene.getRectangleScene().height();
-    int nbColonne = scene.getRectangleScene().width();
+    int nbLigne = scene.resolutionHeight();
+    int nbColonne = scene.resolutionWidth();
     Eigen::MatrixXd nouvelleMatricePermittivite = Eigen::MatrixXd::Constant(nbLigne, nbColonne, 0);
     int hauteur = tailleFiltre/2;
     int largeur = tailleFiltre/2;
@@ -150,8 +150,8 @@ void Simulateur::lissageMatricePermittivite()
 
 void Simulateur::remplirMatriceDensiteCourant()
 {
-    int nbLigne = scene.getRectangleScene().height();
-    int nbColonne = scene.getRectangleScene().width();
+    int nbLigne = scene.resolutionHeight();
+    int nbColonne = scene.resolutionWidth();
     //on genere un tableau des surfaces des formes
     QVector<double> surfaces;
     QList<Forme*>::iterator f;
@@ -181,8 +181,8 @@ void Simulateur::remplirMatriceDensiteCourant()
 
 void Simulateur::calculMatricesDerivees()
 {
-    int nbLigne = scene.getRectangleScene().height();
-    int nbColonne = scene.getRectangleScene().width();
+    int nbLigne = scene.resolutionHeight();
+    int nbColonne = scene.resolutionWidth();
     for (int i = 1; i < nbLigne - 1; i++) {
         for (int j = 1; j < nbColonne - 1; j++) {
             matriceDeriveeZ(i, j) = (matricePermittivite(i+1, j) - matricePermittivite(i-1, j))/(2*scene.getPas());
@@ -195,26 +195,32 @@ void Simulateur::calculMatricesDerivees()
 void Simulateur::transformerMatricesEnVecteurs()
 {
     matricePermittivite.transposeInPlace();
-    matricePermittivite.resize(scene.getRectangleScene().height()*scene.getRectangleScene().width(), 1);
+    matricePermittivite.resize(scene.resolutionTotal(), 1);
     matriceDensiteCourant.transposeInPlace();
-    matriceDensiteCourant.resize(scene.getRectangleScene().height()*scene.getRectangleScene().width(), 1);
+    matriceDensiteCourant.resize(scene.resolutionTotal(), 1);
     matriceDeriveeZ.transposeInPlace();
-    matriceDeriveeZ.resize(scene.getRectangleScene().height()*scene.getRectangleScene().width(), 1);
+    matriceDeriveeZ.resize(scene.resolutionTotal(), 1);
     matriceDeriveeR.transposeInPlace();
-    matriceDeriveeR.resize(scene.getRectangleScene().height()*scene.getRectangleScene().width(), 1);
+    matriceDeriveeR.resize(scene.resolutionTotal(), 1);
 }
 
 void Simulateur::transformerVecteurSolutionEnMatrice()
 {
-    vecteurSolution.resize(scene.getRectangleScene().width(), scene.getRectangleScene().height());
+    vecteurSolution.resize(scene.resolutionWidth(), scene.resolutionHeight());
     vecteurSolution.transposeInPlace();
+
+    // Transpose back to matrices
+    matricePermittivite.resize(scene.resolutionWidth(), scene.resolutionHeight());
+    matricePermittivite.transposeInPlace();
+    matriceDensiteCourant.resize(scene.resolutionWidth(), scene.resolutionHeight());
+    matriceDensiteCourant.transposeInPlace();
 }
 
 void Simulateur::preparerSolveur()
 {
     // Resolution constants
-    const int rows = scene.getRectangleScene().height();
-    const int cols = scene.getRectangleScene().width();
+    const int rows = scene.resolutionHeight();
+    const int cols = scene.resolutionWidth();
     const int nbCells = rows * cols;
 
     // Dimension constants: h: step size on axis r, k: step size on axis z
@@ -285,7 +291,7 @@ void Simulateur::preparerSolveur()
 
 void Simulateur::calculVecteurSecondMembre()
 {
-    for (int i = 0;i < scene.getRectangleScene().height()*scene.getRectangleScene().width();i++) {
+    for (int i = 0;i < scene.resolutionTotal();i++) {
         vecteurSecondMembre(i) = -matriceDensiteCourant(i, 0) / matricePermittivite(i, 0);
     }
 }
@@ -302,8 +308,8 @@ void Simulateur::calculSolution()
 void Simulateur::calculChampB()
 {
     // Resolution constants
-    const int rows = scene.getRectangleScene().height();
-    const int cols = scene.getRectangleScene().width();
+    const int rows = scene.resolutionHeight();
+    const int cols = scene.resolutionWidth();
 
     // Dimension constants: h: step size on axis r, k: step size on axis z
     const double h = scene.getPas();
@@ -349,17 +355,17 @@ void Simulateur::calculChampB()
 
 Eigen::MatrixXd Simulateur::symetriqueMatrice(const Eigen::MatrixXd &solution, const double coefficient)
 {
-    Eigen::MatrixXd solutionSymetrique = Eigen::MatrixXd::Constant(scene.getRectangleScene().height(), 2*scene.getRectangleScene().width() - 1, 0);
+    Eigen::MatrixXd solutionSymetrique = Eigen::MatrixXd::Constant(scene.resolutionHeight(), 2*scene.resolutionWidth() - 1, 0);
     //dans la partie de droite on recopie la matrice solution
-    for (int i = 0;i < scene.getRectangleScene().height();i++) {
-        for (int j = scene.getRectangleScene().width() - 1;j < 2*scene.getRectangleScene().width() - 1;j++) {
-            solutionSymetrique(i, j) = solution(i, j-scene.getRectangleScene().width()+1);
+    for (int i = 0;i < scene.resolutionHeight();i++) {
+        for (int j = scene.resolutionWidth() - 1;j < 2*scene.resolutionWidth() - 1;j++) {
+            solutionSymetrique(i, j) = solution(i, j-scene.resolutionWidth()+1);
         }
     }
     //dans la partie gauche on recopie l'oppose de la matrice
-    for (int i = 0;i < scene.getRectangleScene().height();i++) {
-        for (int j = 0;j < scene.getRectangleScene().width() - 1;j++) {
-            solutionSymetrique(i, j) = coefficient * solution(i, scene.getRectangleScene().width() - 1 - j);
+    for (int i = 0;i < scene.resolutionHeight();i++) {
+        for (int j = 0;j < scene.resolutionWidth() - 1;j++) {
+            solutionSymetrique(i, j) = coefficient * solution(i, scene.resolutionWidth() - 1 - j);
         }
     }
     return solutionSymetrique;
@@ -380,18 +386,16 @@ void Simulateur::enregistrerResultats(const QString &fichierMatriceA, const QStr
     std::ofstream fichier("matricebcentre.txt", std::ios::out | std::ios::trunc);
     if(fichier)
     {
-        for (int i = 0;i < scene.getRectangleScene().height();i++)
+        for (int i = 0;i < scene.resolutionHeight();i++)
         {
             fichier << matriceB(i, 0) << std::endl;
         }
         fichier.close();
     }
 
-    // TODO: Transform vectors back to matrices (matricePermittivite, matriceDensiteCourant)
-
     // Output matrices in VTK format
-    // exportScalarMatrixVtk("mu.vtk", matricePermittivite, scene.getPas(), scene.getPas());
-    // exportScalarMatrixVtk("i.vtk", matriceDensiteCourant, scene.getPas(), scene.getPas());
+    exportScalarMatrixVtk("mu.vtk", matricePermittivite, scene.getPas(), scene.getPas());
+    exportScalarMatrixVtk("i.vtk", matriceDensiteCourant, scene.getPas(), scene.getPas());
 	exportScalarMatrixVtk("a.vtk", vecteurSolution, scene.getPas(), scene.getPas());
     exportVectorMatrixVtk("b.vtk", matriceBr, matriceBz, scene.getPas(), scene.getPas());
 }
