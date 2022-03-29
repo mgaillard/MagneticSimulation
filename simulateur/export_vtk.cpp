@@ -94,7 +94,7 @@ bool exportVectorMatrixVtk(
 	{
 		for (unsigned int j = 0; j < matrixR.cols(); j++)
 		{
-			out << matrixZ(i, j) << " " << matrixR(i, j) << " 0.0\n";
+			out << matrixR(i, j) << " " << matrixZ(i, j) << " 0.0\n";
 		}
 	}
 
