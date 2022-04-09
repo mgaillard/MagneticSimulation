@@ -17,6 +17,8 @@ public:
 	void setRadius(double r);
     const double& getRadius() const;
 
+    void draw(QPainter& painter, int offsetX, int offsetY) override;
+
 private:
     double m_radius;
 };

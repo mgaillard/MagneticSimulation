@@ -1,6 +1,12 @@
 #include "export_image.h"
 
 #include <QImage>
+#include <QPainter>
+
+#include "shapecircle.h"
+#include "shapepolygon.h"
+
+// ---------------------------------------- Private functions ----------------------------------------
 
 /**
  * \brief Compute the color corresponding to an intensity (Matlab JET color map)
@@ -51,14 +57,11 @@ QColor getColorByIntensity(const double intensity)
 	};
 }
 
-bool exportScalarMatrixImage(
-	const QString &filename,
-	Eigen::MatrixXd &matrix,
-	const ImageScalingStrategy& strategy)
+QImage generateScalarMatrixImage(const Eigen::MatrixXd& matrix, const ImageScalingStrategy& strategy)
 {
 	const auto cols = static_cast<int>(matrix.cols());
 	const auto rows = static_cast<int>(matrix.rows());
-	
+
 	const auto minimum = matrix.minCoeff();
 	const auto maximum = matrix.maxCoeff();
 
@@ -89,6 +92,55 @@ bool exportScalarMatrixImage(
 			image.setPixel(QPoint(j, i), getColorByIntensity(value).rgb());
 		}
 	}
+
+	return image;
+}
+
+// ---------------------------------------- Public functions ----------------------------------------
+
+bool exportScalarMatrixImage(
+	const QString& filename,
+	const Eigen::MatrixXd& matrix,
+	const ImageScalingStrategy& strategy)
+{
+	const auto image = generateScalarMatrixImage(matrix, strategy);
+
+	return image.save(filename);
+}
+
+bool exportScalarMatrixWithSceneImage(
+	const QString& filename,
+	const Eigen::MatrixXd& matrix,
+	const ImageScalingStrategy& strategy,
+	const Scene& scene,
+	int offsetX)
+{
+	// Pen width
+	const int width = 3;
+
+	// The background image is the export of the matrix
+	auto image = generateScalarMatrixImage(matrix, strategy);
+
+	QPainter painter;
+	painter.begin(&image);
+	
+	for (const auto& shape : scene.getShapes())
+	{
+		if (shape->getCurrent() != 0.0)
+		{
+			// If the shape has current, display in yellow
+			painter.setPen(QPen(QColor(255, 255, 0), width, Qt::SolidLine));
+		}
+		else
+		{
+			// If the shape has no current, display in red
+			painter.setPen(QPen(QColor(255, 0, 0), width, Qt::SolidLine));
+		}
+
+		shape->draw(painter, offsetX, 0);
+	}
+
+	painter.end();
 
 	return image.save(filename);
 }

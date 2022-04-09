@@ -33,7 +33,11 @@ public:
     void calculSolution();
     void calculChampB();
     Eigen::MatrixXd symetriqueMatrice(const Eigen::MatrixXd &solution, const double coefficient);
-    void enregistrerResultats(const QString &fichierMatriceA, const QString &fichierMatriceBr, const QString &fichierMatriceBz, const QString &fichierMatriceB);
+    void enregistrerResultats(const QString& fichierMatriceA,
+                              const QString& fichierMatriceBr,
+                              const QString& fichierMatriceBz,
+                              const QString& fichierMatriceB,
+                              const QString& fileMatrixBWithScene);
 private:
     Scene scene;
     //variables de la simulation

@@ -4,6 +4,8 @@
 
 #include <Eigen/Core>
 
+#include "scene.h"
+
 /**
  * \brief Strategy to rescale matrices when exporting to an image file.
  */
@@ -29,5 +31,11 @@ enum class ImageScalingStrategy
  * \return True if the image was successfully saved
  */
 bool exportScalarMatrixImage(const QString& filename,
-                             Eigen::MatrixXd& matrix,
+                             const Eigen::MatrixXd& matrix,
                              const ImageScalingStrategy& strategy);
+
+bool exportScalarMatrixWithSceneImage(const QString& filename,
+                                      const Eigen::MatrixXd& matrix,
+                                      const ImageScalingStrategy& strategy,
+                                      const Scene& scene,
+									  int offsetX);

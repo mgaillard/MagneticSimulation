@@ -1,4 +1,4 @@
-#include "ShapeCircle.h"
+#include "shapecircle.h"
 
 #include <cmath>
 
@@ -36,4 +36,20 @@ void ShapeCircle::setRadius(double r)
 const double& ShapeCircle::getRadius() const
 {
     return m_radius;
+}
+
+void ShapeCircle::draw(QPainter& painter, int offsetX, int offsetY)
+{
+    // The rectangle starts at the center + offset - radius, and the width and height are twice the radius
+    const QRectF rectangle(m_center.x() + offsetX - m_radius,
+                           m_center.y() + offsetY - m_radius,
+                           2.0 * m_radius,
+                           2.0 * m_radius);
+
+    // The start angle corresponds to the angle at the 3 o'clock position
+    constexpr int startAngle = 0;
+    // The span angle is defined in 1 / 16th of a degrees, so the full circle equals 360 * 16
+    constexpr int spanAngle = 360 * 16;
+
+    painter.drawArc(rectangle, startAngle, spanAngle);
 }

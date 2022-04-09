@@ -35,7 +35,8 @@ bool ConsoleApplication::run() const
 		sim.enregistrerResultats(QString("matriceA.png"),
 		                         QString("matriceBr.png"),
 		                         QString("matriceBz.png"),
-		                         QString("matriceB.png"));
+		                         QString("matriceB.png"),
+								 QString("matriceBscene.png"));
 	}
 
 	return true;

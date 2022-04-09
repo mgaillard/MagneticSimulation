@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 
+#include <QPainter>
 #include <QPoint>
 #include <QRect>
 
@@ -25,6 +26,8 @@ public:
 
 	void setCurrent(double c);
     const double& getCurrent() const;
+
+    virtual void draw(QPainter& painter, int offsetX, int offsetY) = 0;
 
 protected:
     QPoint m_center;

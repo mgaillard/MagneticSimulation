@@ -1,4 +1,4 @@
-#include "ShapePolygon.h"
+#include "shapepolygon.h"
 
 ShapePolygon::ShapePolygon(const QPoint &c, QPolygon p) : Shape(c), m_polygon(std::move(p))
 {
@@ -38,4 +38,9 @@ void ShapePolygon::setPolygon(const QPolygon &p)
 const QPolygon& ShapePolygon::getPolygon() const
 {
     return m_polygon;
+}
+
+void ShapePolygon::draw(QPainter& painter, int offsetX, int offsetY)
+{
+    painter.drawPolygon(m_polygon.translated(offsetX, offsetY));
 }

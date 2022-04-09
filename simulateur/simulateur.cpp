@@ -374,7 +374,12 @@ Eigen::MatrixXd Simulateur::symetriqueMatrice(const Eigen::MatrixXd &solution, c
     return solutionSymetrique;
 }
 
-void Simulateur::enregistrerResultats(const QString &fichierMatriceA, const QString &fichierMatriceBr, const QString &fichierMatriceBz, const QString &fichierMatriceB)
+void Simulateur::enregistrerResultats(
+    const QString& fichierMatriceA,
+    const QString& fichierMatriceBr,
+    const QString& fichierMatriceBz,
+    const QString& fichierMatriceB,
+    const QString& fileMatrixBWithScene)
 {
     Eigen::MatrixXd matriceAEspace = symetriqueMatrice(vecteurSolution, -1.0);
     Eigen::MatrixXd matriceBrEspace = symetriqueMatrice(matriceBr, -1.0);
@@ -384,6 +389,12 @@ void Simulateur::enregistrerResultats(const QString &fichierMatriceA, const QStr
     exportScalarMatrixImage(fichierMatriceBr, matriceBrEspace, ImageScalingStrategy::ZeroCentered);
     exportScalarMatrixImage(fichierMatriceBz, matriceBzEspace, ImageScalingStrategy::ZeroCentered);
     exportScalarMatrixImage(fichierMatriceB, matriceBEspace, ImageScalingStrategy::ZeroMinimum);
+
+    exportScalarMatrixWithSceneImage(fileMatrixBWithScene,
+                                     matriceBEspace,
+                                     ImageScalingStrategy::ZeroMinimum,
+                                     scene,
+                                     scene.resolutionWidth());
 
     //on enregistre le vecteur
     std::ofstream fichier("matricebcentre.txt", std::ios::out | std::ios::trunc);

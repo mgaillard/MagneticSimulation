@@ -22,6 +22,8 @@ public:
     void setPolygon(const QPolygon &p);
     const QPolygon& getPolygon() const;
 
+    void draw(QPainter& painter, int offsetX, int offsetY) override;
+
 private:
     QPolygon m_polygon;
 };
