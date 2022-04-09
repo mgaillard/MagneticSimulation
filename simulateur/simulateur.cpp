@@ -376,10 +376,10 @@ Eigen::MatrixXd Simulateur::symetriqueMatrice(const Eigen::MatrixXd &solution, c
 
 void Simulateur::enregistrerResultats(const QString &fichierMatriceA, const QString &fichierMatriceBr, const QString &fichierMatriceBz, const QString &fichierMatriceB)
 {
-    Eigen::MatrixXd matriceAEspace = symetriqueMatrice(vecteurSolution, -1);
-    Eigen::MatrixXd matriceBrEspace = symetriqueMatrice(matriceBr, 1);
-    Eigen::MatrixXd matriceBzEspace = symetriqueMatrice(matriceBz, 1);
-    Eigen::MatrixXd matriceBEspace = symetriqueMatrice(matriceB, 1);
+    Eigen::MatrixXd matriceAEspace = symetriqueMatrice(vecteurSolution, -1.0);
+    Eigen::MatrixXd matriceBrEspace = symetriqueMatrice(matriceBr, -1.0);
+    Eigen::MatrixXd matriceBzEspace = symetriqueMatrice(matriceBz, 1.0);
+    Eigen::MatrixXd matriceBEspace = symetriqueMatrice(matriceB, 1.0);
     exportScalarMatrixImage(fichierMatriceA, matriceAEspace, ImageScalingStrategy::ZeroCentered);
     exportScalarMatrixImage(fichierMatriceBr, matriceBrEspace, ImageScalingStrategy::ZeroCentered);
     exportScalarMatrixImage(fichierMatriceBz, matriceBzEspace, ImageScalingStrategy::ZeroCentered);
