@@ -4,7 +4,7 @@ Axis symmetric simulation of magnetic field using finite differences.
 ## TODO
 - Add screenshots to the Readme
 - Output the plot of the magnetic field on the line r=0.0
-- Export in Paraview format
+- Add default visualizations in Paraview
 - Draw shapes in the 2D figures with white contours
 - Contour lines of the magnetic field
 - Split as a lib (Eigen-only), console App (Qt), and test project (Catch2).
@@ -13,6 +13,7 @@ Axis symmetric simulation of magnetic field using finite differences.
 - Export the scene in 3D with an OBJ mesh
 - Translate the code to english
 - Improve and refactor code with C++11
+- Change the smoothing convolution with Eigen convolution
 
 
 ## Testing code in Matlab
