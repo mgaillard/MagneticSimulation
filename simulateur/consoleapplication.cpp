@@ -1,5 +1,7 @@
 #include "consoleapplication.h"
 
+#include <spdlog/spdlog.h>
+
 #include "simulateur.h"
 
 ConsoleApplication::ConsoleApplication(ConsoleApplicationParameters parameters, QObject* parent) :
@@ -34,8 +36,6 @@ bool ConsoleApplication::run() const
 		                         QString("matriceBr.png"),
 		                         QString("matriceBz.png"),
 		                         QString("matriceB.png"));
-
-		std::cout << "Fin de la simulation." << std::endl;
 	}
 
 	return true;

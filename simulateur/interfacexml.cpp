@@ -1,6 +1,6 @@
 #include "interfacexml.h"
 
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 #include "shapecircle.h"
 #include "shapepolygon.h"
@@ -12,13 +12,13 @@ Scene InterfaceXml::loadFile(const QString& filename)
 
 	if (!xmlDoc.open(QIODevice::ReadOnly))
 	{
-		std::cerr << "The XML document could not be opened." << std::endl;
+        spdlog::error("The XML document could not be opened.");
 		return {};
 	}
 	if (!doc.setContent(&xmlDoc))
 	{
 		xmlDoc.close();
-		std::cerr << "The XML document could not be attributed to the QDomDocument object." << std::endl;
+        spdlog::error("The XML document could not be attributed to the QDomDocument object.");
 		return {};
 	}
 
@@ -90,7 +90,7 @@ Scene InterfaceXml::loadScene(const QDomElement& elScene)
     }
     else
     {
-        std::cerr << "XML error: The scene is not valid" << std::endl;
+        spdlog::error("XML error: The scene is not valid");
     }
 
     return scene;

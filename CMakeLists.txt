@@ -12,6 +12,7 @@ find_package(OpenMP REQUIRED)
 list(PREPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/")
 
 # Dependencies for application
+include(spdlog)
 include(eigen)
 include(qt5)
 

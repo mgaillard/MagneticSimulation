@@ -1,6 +1,6 @@
 #include "solversparselu.h"
 
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 SolverSparseLU::SolverSparseLU() : SolverSparse()
 {
@@ -17,7 +17,7 @@ Eigen::MatrixXd SolverSparseLU::computeSolution(const Eigen::VectorXd &columnVec
 
     // Compute the relative error of the solution of Ax=b (norm() is L2 norm)
     const double relativeError = (m_principalMatrix * solution - columnVector).norm() / columnVector.norm();
-    std::cout << "The relative error is:\n" << relativeError << std::endl;
+    spdlog::debug("The relative error is: {}", relativeError);
 
     return solution;
 }

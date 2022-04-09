@@ -7,9 +7,9 @@ message(STATUS "Creating target 'MagneticSimulation'")
 set(HEADER_FILES
     constants.h
     consoleapplication.h
+    export_image.h
     export_vtk.h
     interfacexml.h
-    renduimage.h
     scene.h
     shape.h
     shapecircle.h
@@ -24,10 +24,10 @@ set(HEADER_FILES
 
 set(SRC_FILES
     consoleapplication.cpp
+    export_image.cpp
     export_vtk.cpp
     interfacexml.cpp
     main.cpp
-    renduimage.cpp
     scene.cpp
     shape.cpp
     shapecircle.cpp
@@ -60,12 +60,21 @@ target_sources(MagneticSimulation
 
 target_link_libraries(MagneticSimulation 
     PRIVATE
+    spdlog::spdlog
     OpenMP::OpenMP_CXX
+    Eigen3::Eigen
     Qt5::Core
     Qt5::Gui
     Qt5::Xml
-    Eigen3::Eigen
 )
+
+if(TARGET spdlog::spdlog)
+    add_custom_command(TARGET MagneticSimulation
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<TARGET_FILE:spdlog>" "$<TARGET_FILE_DIR:MagneticSimulation>"
+    )
+endif()
 
 if(TARGET Qt5::windeployqt)
     add_custom_command(TARGET MagneticSimulation

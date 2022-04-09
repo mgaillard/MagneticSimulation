@@ -2,7 +2,10 @@
 
 #include <chrono>
 
+#include <spdlog/spdlog.h>
+
 #include "constants.h"
+#include "export_image.h"
 #include "export_vtk.h"
 
 Simulateur::Simulateur(const QString& filename)
@@ -302,7 +305,7 @@ void Simulateur::calculSolution()
     vecteurSolution = solveur.computeSolution(vecteurSecondMembre);
     const auto end_time = std::chrono::steady_clock::now();
 
-    std::cout << "solving time: " << std::chrono::duration<double, std::milli>(end_time - start_time).count() << " ms" << std::endl;
+    spdlog::info("solving time: {} ms", std::chrono::duration<double, std::milli>(end_time - start_time).count());
 }
 
 void Simulateur::calculChampB()
@@ -377,10 +380,10 @@ void Simulateur::enregistrerResultats(const QString &fichierMatriceA, const QStr
     Eigen::MatrixXd matriceBrEspace = symetriqueMatrice(matriceBr, 1);
     Eigen::MatrixXd matriceBzEspace = symetriqueMatrice(matriceBz, 1);
     Eigen::MatrixXd matriceBEspace = symetriqueMatrice(matriceB, 1);
-    RenduImage::enregistrerMatrice(fichierMatriceA, matriceAEspace);
-    RenduImage::enregistrerMatrice(fichierMatriceBr, matriceBrEspace);
-    RenduImage::enregistrerMatrice(fichierMatriceBz, matriceBzEspace);
-    RenduImage::enregistrerMatrice(fichierMatriceB, matriceBEspace);
+    exportScalarMatrixImage(fichierMatriceA, matriceAEspace);
+    exportScalarMatrixImage(fichierMatriceBr, matriceBrEspace);
+    exportScalarMatrixImage(fichierMatriceBz, matriceBzEspace);
+    exportScalarMatrixImage(fichierMatriceB, matriceBEspace);
 
     //on enregistre le vecteur
     std::ofstream fichier("matricebcentre.txt", std::ios::out | std::ios::trunc);

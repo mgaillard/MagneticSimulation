@@ -1,6 +1,6 @@
 #include "solvercolpivhouseholderqr.h"
 
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 #include <Eigen/QR>
 
@@ -14,7 +14,7 @@ Eigen::MatrixXd SolverColPivHouseholderQR::computeSolution(const Eigen::VectorXd
 
 	// Compute the relative error of the solution of Ax=b (norm() is L2 norm)
 	const double relativeError = (m_principalMatrix * solution - columnVector).norm() / columnVector.norm();
-	std::cout << "The relative error is:\n" << relativeError << std::endl;
+	spdlog::debug("The relative error is: {}", relativeError);
 
 	return solution;
 }

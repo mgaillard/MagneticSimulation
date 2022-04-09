@@ -12,7 +12,6 @@
 #include "shape.h"
 #include "ShapeCircle.h"
 #include "interfacexml.h"
-#include "renduimage.h"
 #include "solversparselu.h"
 #include "solvercolpivhouseholderqr.h"
 

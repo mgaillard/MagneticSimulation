@@ -1,7 +1,8 @@
 #include "export_vtk.h"
 
-#include <iostream>
 #include <fstream>
+
+#include <spdlog/spdlog.h>
 
 bool exportScalarMatrixVtk(const std::string& filename, const Eigen::MatrixXd& matrix, double h, double k)
 {
@@ -9,7 +10,7 @@ bool exportScalarMatrixVtk(const std::string& filename, const Eigen::MatrixXd& m
 
 	if (!out.is_open())
 	{
-		std::cerr << "Could not open file: " << filename << std::endl;
+		spdlog::error("Could not open file: {}", filename);
 		return false;
 	}
 
@@ -54,13 +55,13 @@ bool exportVectorMatrixVtk(
 {
 	if (matrixR.rows() != matrixZ.rows())
 	{
-		std::cerr << "Matrices do not have the same number of rows" << std::endl;
+		spdlog::error("Matrices do not have the same number of rows");
 		return false;
 	}
 
 	if (matrixR.cols() != matrixZ.cols())
 	{
-		std::cerr << "Matrices do not have the same number of cols" << std::endl;
+		spdlog::error("Matrices do not have the same number of cols");
 		return false;
 	}
 
@@ -68,7 +69,7 @@ bool exportVectorMatrixVtk(
 
 	if (!out.is_open())
 	{
-		std::cerr << "Could not open file: " << filename << std::endl;
+		spdlog::error("Could not open file: {}", filename);
 		return false;
 	}
 

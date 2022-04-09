@@ -1,7 +1,8 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QFileInfo>
-#include <QDebug>
+
+#include <spdlog/spdlog.h>
 
 #include "consoleapplication.h"
 
@@ -15,8 +16,6 @@ CommandLineParseResult parseCommandLine(const QCoreApplication& app,
                                         QCommandLineParser& parser,
                                         ConsoleApplicationParameters* parameters);
 
-#include <Eigen/Dense>
-#include <iostream>
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
@@ -64,7 +63,7 @@ CommandLineParseResult parseCommandLine(
 	// No input file given, this is an error
 	if (!parser.isSet(inputOption))
 	{
-		qWarning() << "Error: no input file was given.";
+		spdlog::warn("Error: no input file was given.");
 		return CommandLineParseResult::Error;
 	}
 
@@ -76,7 +75,7 @@ CommandLineParseResult parseCommandLine(
 
 		if (!fileInfo.exists())
 		{
-			qWarning() << "Error: the input file does not exist.";
+			spdlog::warn("Error: the input file does not exist.");
 			return CommandLineParseResult::Error;
 		}
 		parameters->inputFile = fileInfo.absoluteFilePath();
