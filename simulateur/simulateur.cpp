@@ -285,7 +285,7 @@ void Simulateur::preparerSolveur()
 	    }
     }
 
-    solveur.remplirMatricePrincipale(vecAlpha, vecBeta, vecGamma, vecDelta1, vecDelta2);
+    solveur.generatePrincipalMatrix(vecAlpha, vecBeta, vecGamma, vecDelta1, vecDelta2);
 }
 
 
@@ -299,7 +299,7 @@ void Simulateur::calculVecteurSecondMembre()
 void Simulateur::calculSolution()
 {
     const auto start_time = std::chrono::steady_clock::now();
-    vecteurSolution = solveur.calculerSolution(vecteurSecondMembre);
+    vecteurSolution = solveur.computeSolution(vecteurSecondMembre);
     const auto end_time = std::chrono::steady_clock::now();
 
     std::cout << "solving time: " << std::chrono::duration<double, std::milli>(end_time - start_time).count() << " ms" << std::endl;

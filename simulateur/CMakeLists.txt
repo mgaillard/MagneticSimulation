@@ -15,11 +15,11 @@ set(HEADER_FILES
     shapecircle.h
     shapepolygon.h
     simulateur.h
-    solveur.h
-    solveurcolpivhouseholderqr.h
-    solveurdense.h
-    solveursparse.h
-    solveursparselu.h
+    solver.h
+    solvercolpivhouseholderqr.h
+    solverdense.h
+    solversparse.h
+    solversparselu.h
 )
 
 set(SRC_FILES
@@ -34,11 +34,11 @@ set(SRC_FILES
     shapepolygon.cpp
     simulateur.cpp
     simulateur.cpp
-    solveur.cpp
-    solveurcolpivhouseholderqr.cpp
-    solveurdense.cpp
-    solveursparse.cpp
-    solveursparselu.cpp
+    solver.cpp
+    solvercolpivhouseholderqr.cpp
+    solverdense.cpp
+    solversparse.cpp
+    solversparselu.cpp
 )
 
 # Setup filters in Visual Studio

@@ -13,8 +13,8 @@
 #include "ShapeCircle.h"
 #include "interfacexml.h"
 #include "renduimage.h"
-#include "solveursparselu.h"
-#include "solveurcolpivhouseholderqr.h"
+#include "solversparselu.h"
+#include "solvercolpivhouseholderqr.h"
 
 class Simulateur
 {
@@ -47,7 +47,7 @@ private:
     Eigen::MatrixXd matriceBr;
     Eigen::MatrixXd matriceBz;
     Eigen::MatrixXd matriceB;
-    SolveurSparseLU solveur;
+    SolverSparseLU solveur;
 };
 
 #endif // SIMULATEUR_H
