@@ -380,10 +380,10 @@ void Simulateur::enregistrerResultats(const QString &fichierMatriceA, const QStr
     Eigen::MatrixXd matriceBrEspace = symetriqueMatrice(matriceBr, 1);
     Eigen::MatrixXd matriceBzEspace = symetriqueMatrice(matriceBz, 1);
     Eigen::MatrixXd matriceBEspace = symetriqueMatrice(matriceB, 1);
-    exportScalarMatrixImage(fichierMatriceA, matriceAEspace);
-    exportScalarMatrixImage(fichierMatriceBr, matriceBrEspace);
-    exportScalarMatrixImage(fichierMatriceBz, matriceBzEspace);
-    exportScalarMatrixImage(fichierMatriceB, matriceBEspace);
+    exportScalarMatrixImage(fichierMatriceA, matriceAEspace, ImageScalingStrategy::ZeroCentered);
+    exportScalarMatrixImage(fichierMatriceBr, matriceBrEspace, ImageScalingStrategy::ZeroCentered);
+    exportScalarMatrixImage(fichierMatriceBz, matriceBzEspace, ImageScalingStrategy::ZeroCentered);
+    exportScalarMatrixImage(fichierMatriceB, matriceBEspace, ImageScalingStrategy::ZeroMinimum);
 
     //on enregistre le vecteur
     std::ofstream fichier("matricebcentre.txt", std::ios::out | std::ios::trunc);

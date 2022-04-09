@@ -51,12 +51,29 @@ QColor getColorByIntensity(const double intensity)
 	};
 }
 
-bool exportScalarMatrixImage(const QString &filename, Eigen::MatrixXd &matrix)
+bool exportScalarMatrixImage(
+	const QString &filename,
+	Eigen::MatrixXd &matrix,
+	const ImageScalingStrategy& strategy)
 {
 	const auto cols = static_cast<int>(matrix.cols());
 	const auto rows = static_cast<int>(matrix.rows());
+	
 	const auto minimum = matrix.minCoeff();
 	const auto maximum = matrix.maxCoeff();
+
+	double rescaleMinimum, rescaleMaximum;
+	switch (strategy)
+	{
+	case ImageScalingStrategy::ZeroCentered:
+		rescaleMaximum = std::max(std::abs(minimum), std::abs(maximum));
+		rescaleMinimum = -rescaleMaximum;
+		break;
+	case ImageScalingStrategy::ZeroMinimum:
+		rescaleMinimum = 0.0;
+		rescaleMaximum = maximum;
+		break;
+	}
 
 	QImage image(cols, rows, QImage::Format_RGB32);
 
@@ -64,9 +81,9 @@ bool exportScalarMatrixImage(const QString &filename, Eigen::MatrixXd &matrix)
 	{
 		for (int j = 0; j < cols; j++)
 		{
-			// TODO: make sure 0.0 is always at 0.5 intensity
-			// Remap the value in the matrix between 
-			const auto value = (matrix(i, j) - minimum) / (maximum - minimum);
+			// Remap the value in the matrix between 0.0 and 1.0
+			auto value = (matrix(i, j) - rescaleMinimum) / (rescaleMaximum - rescaleMinimum);
+			value = std::clamp(value, 0.0, 1.0);
 
 			image.setPixel(QPoint(j, i), getColorByIntensity(value).rgb());
 		}
