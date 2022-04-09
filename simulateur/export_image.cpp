@@ -62,7 +62,8 @@ bool exportScalarMatrixImage(
 	const auto minimum = matrix.minCoeff();
 	const auto maximum = matrix.maxCoeff();
 
-	double rescaleMinimum, rescaleMaximum;
+	double rescaleMinimum = 0.0;
+	double rescaleMaximum = 1.0;
 	switch (strategy)
 	{
 	case ImageScalingStrategy::ZeroCentered:
