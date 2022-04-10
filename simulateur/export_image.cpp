@@ -3,9 +3,6 @@
 #include <QImage>
 #include <QPainter>
 
-#include "shapecircle.h"
-#include "shapepolygon.h"
-
 // ---------------------------------------- Private functions ----------------------------------------
 
 /**
