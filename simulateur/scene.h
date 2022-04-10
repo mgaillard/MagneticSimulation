@@ -16,15 +16,15 @@ public:
     int resolutionWidth() const;
     int resolutionTotal() const;
 
-    void setPas(const double& p);
-    const double& getPas() const;
-    double getSqPas() const;
+    void setStep(double s);
+    const double& getStep() const;
+    double getSqStep() const;
 
     void setShapes(const ShapeList& shapes);
     const ShapeList& getShapes() const;
 
 private:
     QRect m_rectangleScene;
-    double m_pas;
+    double m_step;
     ShapeList m_shapes;
 };

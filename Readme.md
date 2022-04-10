@@ -3,16 +3,13 @@ Axis symmetric simulation of magnetic field using finite differences.
 
 ## TODO
 - Streamlines of the magnetic field
+- Animation with interpolation of a parameter between two values
 - Add screenshots to the Readme
-- Output the plot of the magnetic field on the line r=0.0
 - Add default visualizations in Paraview
 - Split as a lib (Eigen-only), console App (Qt), and test project (Catch2).
 - Add a test with a spire and compare to the theory formula
-- Animation with interpolation of a parameter between two values
+- Output the plot of the magnetic field on the line r=0.0
 - Export the scene in 3D with an OBJ mesh
-- Translate the code to english
-- Improve and refactor code with C++11
-- Change the smoothing convolution with Eigen convolution
 
 
 ## Testing code in Matlab

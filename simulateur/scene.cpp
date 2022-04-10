@@ -2,7 +2,7 @@
 
 Scene::Scene() :
 	m_rectangleScene(0, 0, -1, -1),
-	m_pas(0.0)
+	m_step(0.0)
 {
 }
 
@@ -31,19 +31,19 @@ int Scene::resolutionTotal() const
     return resolutionHeight() * resolutionWidth();
 }
 
-void Scene::setPas(const double& p)
+void Scene::setStep(double s)
 {
-    m_pas = p;
+    m_step = s;
 }
 
-const double& Scene::getPas() const
+const double& Scene::getStep() const
 {
-    return m_pas;
+    return m_step;
 }
 
-double Scene::getSqPas() const
+double Scene::getSqStep() const
 {
-    return m_pas * m_pas;
+    return m_step * m_step;
 }
 
 void Scene::setShapes(const ShapeList& shapes)

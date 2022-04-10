@@ -1,5 +1,6 @@
 #include "magneticsimulation.h"
 
+#include <fstream>
 #include <chrono>
 
 #include <spdlog/spdlog.h>
@@ -11,28 +12,31 @@
 MagneticSimulation::MagneticSimulation(const QString& filename)
 {
     // Load simulation definition file
-    scene = InterfaceXml::loadFile(filename);
+    m_scene = InterfaceXml::loadFile(filename);
 }
 
-void MagneticSimulation::initialiser()
+void MagneticSimulation::initialize()
 {
-    //on initialise les matrices
-    matricePermittivite = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), constants::mu_0);
-    matriceDensiteCourant = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), 0.0);
-    matriceDeriveeZ = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), 0.0);
-    matriceDeriveeR = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), 0.0);
-    vecteurSecondMembre = Eigen::MatrixXd::Constant(scene.resolutionTotal(), 1, 0.0);
-    vecteurSolution = Eigen::MatrixXd::Constant(scene.resolutionTotal(), 1, 0.0);
-    matriceBr = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), 0.0);
-    matriceBz = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), 0.0);
-    matriceB = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), 0.0);
-    solveur.setSize(scene.resolutionHeight(), scene.resolutionWidth());
+    const auto width = m_scene.resolutionWidth();
+    const auto height = m_scene.resolutionHeight();
+    const auto total = m_scene.resolutionTotal();
+
+    m_matPermeability = Eigen::MatrixXd::Constant(height, width, constants::mu_0);
+    m_matCurrentDensity = Eigen::MatrixXd::Constant(height, width, 0.0);
+    m_matDerZ = Eigen::MatrixXd::Constant(height, width, 0.0);
+    m_matDerR = Eigen::MatrixXd::Constant(height, width, 0.0);
+    m_vecSecondColumn = Eigen::MatrixXd::Constant(total, 1, 0.0);
+    m_vecSolution = Eigen::MatrixXd::Constant(total, 1, 0.0);
+    m_matBr = Eigen::MatrixXd::Constant(height, width, 0.0);
+    m_matBz = Eigen::MatrixXd::Constant(height, width, 0.0);
+    m_matB = Eigen::MatrixXd::Constant(height, width, 0.0);
+    m_solver.setSize(height, width);
 }
 
-bool MagneticSimulation::validationSimulation() const
+bool MagneticSimulation::checkValid() const
 {
     // Check that there is at least one shape in the simulation
-    if (scene.getShapes().size() <= 0)
+    if (m_scene.getShapes().empty())
     {
         return false;
     }
@@ -40,124 +44,137 @@ bool MagneticSimulation::validationSimulation() const
     return true;
 }
 
-void MagneticSimulation::simuler()
+void MagneticSimulation::runSimulation()
 {
-    initialiser();
-	remplirMatricePermittivite();
-    lissageMatricePermittivite();
-    remplirMatriceDensiteCourant();
-    calculMatricesDerivees();
-    transformerMatricesEnVecteurs();
-    calculVecteurSecondMembre();
-    preparerSolveur();
-    calculSolution();
-    transformerVecteurSolutionEnMatrice();
-    calculChampB();
+    initialize();
+	fillMatPermeability();
+    smoothMatPermeability();
+    fillMatCurrentDensity();
+    computeCurrentDerivatives();
+    convertMatricesToVectors();
+    computeSecondColumnVector();
+    prepareSolver();
+    computeSolution();
+    convertSolutionToMatrix();
+    computeMagneticField();
 }
 
-void MagneticSimulation::remplirMatricePermittivite()
+void MagneticSimulation::fillMatPermeability()
 {
-    const int nbLigne = scene.resolutionHeight();
-    const int nbColonne = scene.resolutionWidth();
+    const int rows = m_scene.resolutionHeight();
+    const int cols = m_scene.resolutionWidth();
 
-    for (int i = 0; i < nbLigne; i++)
+    for (int i = 0; i < rows; i++)
     {
-        for (int j = 0; j < nbColonne; j++)
+        for (int j = 0; j < cols; j++)
         {
             QPoint point(j, i);
 
             ShapeList::iterator f;
-            for (const auto& shape : scene.getShapes())
+            for (const auto& shape : m_scene.getShapes())
             {
                 if (shape->isInside(point))
                 {
-                    // sur chaque coefficient, on multiplie la permeabilite de ce milieu par la permeabilite relative de la forme
-                    matricePermittivite(i, j) *= shape->getPermeability();
+                    // The shape contains the relative permeability
+                    // We multiply it to the already existing permeability in the cell
+                    m_matPermeability(i, j) *= shape->getPermeability();
                 }
             }
         }
     }
 
-    //on inverse les coefficients de la matrice
-    for (int i = 0; i < nbLigne; i++)
-    {
-        for (int j = 0; j < nbColonne; j++)
-        {
-            matricePermittivite(i, j) = 1.0 / matricePermittivite(i, j);
-        }
-    }
+    // We take the inverse of the permeability to get the eta matrix
+    m_matPermeability = m_matPermeability.cwiseInverse();
 }
 
-void MagneticSimulation::lissageMatricePermittivite()
+void MagneticSimulation::smoothMatPermeability()
 {
-    //on rempli la matrice de filtrage gaussienne
-    const int tailleFiltre = 10;
+    // Fill the gaussian filter matrix
+    constexpr int filterSize = 10;
     const double alpha = 0.1;
-    Eigen::MatrixXd filtre = Eigen::MatrixXd::Constant(tailleFiltre, tailleFiltre, 0);
-    double sommeCoeffsFiltre = 0;
-    for (int i = 0;i < tailleFiltre;i++)
+    Eigen::MatrixXd filter = Eigen::MatrixXd::Constant(filterSize, filterSize, 0.0);
+    for (int i = 0; i < filterSize; i++)
     {
-        for (int j = 0;j < tailleFiltre;j++)
-        {
-            filtre(i, j) = exp(-alpha*(pow(i-tailleFiltre/2, 2)+pow(j-tailleFiltre/2, 2)));
-            sommeCoeffsFiltre += filtre(i, j);
-        }
+	    for (int j = 0; j < filterSize; j++)
+	    {
+		    filter(i, j) = std::exp(-alpha * (std::pow(i - filterSize / 2, 2)
+		                                              + std::pow(j - filterSize / 2, 2)));
+	    }
     }
-    //on divise les coefficients du filtre par la somme des coefficients
-    filtre /= sommeCoeffsFiltre;
-    //on effectue le filtrage
-    int nbLigne = scene.resolutionHeight();
-    int nbColonne = scene.resolutionWidth();
-    Eigen::MatrixXd nouvelleMatricePermittivite = Eigen::MatrixXd::Constant(nbLigne, nbColonne, 0);
-    int hauteur = tailleFiltre/2;
-    int largeur = tailleFiltre/2;
-    //on fait le produit de convolution
-    for (int i = hauteur; i < nbLigne - hauteur; i++) {
-        for (int j = largeur; j < nbColonne - largeur; j++) {
-            for (int c = 0;c < tailleFiltre;c++) {
-                for (int d = 0;d < tailleFiltre;d++) {
-                    nouvelleMatricePermittivite(i, j) += matricePermittivite(i - hauteur + c, j - largeur + d) * filtre(c, d);
-                }
-            }
-        }
+
+    // Normalize the filter so that the sum of coefficients is 1.0
+    filter /= filter.sum();
+
+    const int rows = m_scene.resolutionHeight();
+    const int cols = m_scene.resolutionWidth();
+
+    Eigen::MatrixXd newMatPermeability = Eigen::MatrixXd::Constant(rows, cols, 0.0);
+
+	constexpr int height = filterSize / 2;
+    constexpr int width = filterSize / 2;
+
+    // Compute a convolution with the filter
+    for (int i = height; i < rows - height; i++)
+    {
+	    for (int j = width; j < cols - width; j++)
+	    {
+		    for (int c = 0; c < filterSize; c++)
+		    {
+			    for (int d = 0; d < filterSize; d++)
+			    {
+				    newMatPermeability(i, j) += m_matPermeability(i - height + c, j - width + d) * filter(c, d);
+			    }
+		    }
+	    }
     }
-    //on rempli ce qu'on ne pourra pas calculer
-    for (int i = 0; i < hauteur; i++) {
-        for (int j = 0; j < nbColonne; j++) {
-            nouvelleMatricePermittivite(i, j) = nouvelleMatricePermittivite(hauteur, j);
-        }
+
+    // Take care of boundaries
+    for (int i = 0; i < height; i++)
+    {
+	    for (int j = 0; j < cols; j++)
+	    {
+		    newMatPermeability(i, j) = newMatPermeability(height, j);
+	    }
     }
-    for (int i = nbLigne - hauteur; i < nbLigne ; i++) {
-        for (int j = 0; j < nbColonne; j++) {
-            nouvelleMatricePermittivite(i, j) = nouvelleMatricePermittivite(nbLigne - hauteur - 1, j);
-        }
+    for (int i = rows - height; i < rows; i++)
+    {
+	    for (int j = 0; j < cols; j++)
+	    {
+		    newMatPermeability(i, j) = newMatPermeability(rows - height - 1, j);
+	    }
     }
-    for (int i = 0; i < nbLigne; i++) {
-        for (int j = 0; j < largeur; j++) {
-            nouvelleMatricePermittivite(i, j) = nouvelleMatricePermittivite(i, largeur);
-        }
+    for (int i = 0; i < rows; i++)
+    {
+	    for (int j = 0; j < width; j++)
+	    {
+		    newMatPermeability(i, j) = newMatPermeability(i, width);
+	    }
     }
-    for (int i = 0; i < nbLigne; i++) {
-        for (int j = nbColonne - largeur; j < nbColonne; j++) {
-            nouvelleMatricePermittivite(i, j) = nouvelleMatricePermittivite(i, nbColonne - largeur - 1);
-        }
+    for (int i = 0; i < rows; i++)
+    {
+	    for (int j = cols - width; j < cols; j++)
+	    {
+		    newMatPermeability(i, j) = newMatPermeability(i, cols - width - 1);
+	    }
     }
-    matricePermittivite = nouvelleMatricePermittivite;
+
+    // Replace the permeability matrix with the smoothed version
+    m_matPermeability = newMatPermeability;
 }
 
-void MagneticSimulation::remplirMatriceDensiteCourant()
+void MagneticSimulation::fillMatCurrentDensity()
 {
-    const int rows = scene.resolutionHeight();
-    const int cols = scene.resolutionWidth();
+    const int rows = m_scene.resolutionHeight();
+    const int cols = m_scene.resolutionWidth();
 
 	// This table contains the surface of all shapes in the scene
     std::vector<double> surfaces;
-    for (const auto& shape : scene.getShapes())
+    for (const auto& shape : m_scene.getShapes())
     {
         // Surface in number of cells
-        const auto surfaceInCells = shape->computeSurface(scene.getRectangleScene());
+        const auto surfaceInCells = shape->computeSurface(m_scene.getRectangleScene());
         // Surface in meters
-        const auto surfaceInMeters = static_cast<double>(surfaceInCells) * scene.getSqPas();
+        const auto surfaceInMeters = static_cast<double>(surfaceInCells) * m_scene.getSqStep();
 
         surfaces.push_back(surfaceInMeters);
     }
@@ -170,69 +187,73 @@ void MagneticSimulation::remplirMatriceDensiteCourant()
         {
             const QPoint point(j, i);
 
-            for (unsigned int k = 0; k < scene.getShapes().size(); k++)
+            for (unsigned int k = 0; k < m_scene.getShapes().size(); k++)
             {
-                if (scene.getShapes()[k]->isInside(point))
+                if (m_scene.getShapes()[k]->isInside(point))
                 {
                     // The current density in the cell is the current in ampere divided by the surface in meters
-                    matriceDensiteCourant(i, j) += scene.getShapes()[k]->getCurrent() / surfaces[k];
+                    m_matCurrentDensity(i, j) += m_scene.getShapes()[k]->getCurrent() / surfaces[k];
                 }
             }
         }
     }
 }
 
-void MagneticSimulation::calculMatricesDerivees()
+void MagneticSimulation::computeCurrentDerivatives()
 {
-    int nbLigne = scene.resolutionHeight();
-    int nbColonne = scene.resolutionWidth();
-    for (int i = 1; i < nbLigne - 1; i++) {
-        for (int j = 1; j < nbColonne - 1; j++) {
-            matriceDeriveeZ(i, j) = (matricePermittivite(i+1, j) - matricePermittivite(i-1, j))/(2*scene.getPas());
-            matriceDeriveeR(i, j) = (matricePermittivite(i, j+1) - matricePermittivite(i, j-1))/(2*scene.getPas());
-        }
+    const int rows = m_scene.resolutionHeight();
+    const int cols = m_scene.resolutionWidth();
+    const auto twoSteps = 2.0 * m_scene.getStep();
+
+    for (int i = 1; i < rows - 1; i++)
+    {
+	    for (int j = 1; j < cols - 1; j++)
+	    {
+		    m_matDerZ(i, j) = (m_matPermeability(i + 1, j) - m_matPermeability(i - 1, j)) / twoSteps;
+		    m_matDerR(i, j) = (m_matPermeability(i, j + 1) - m_matPermeability(i, j - 1)) / twoSteps;
+	    }
     }
 }
 
 
-void MagneticSimulation::transformerMatricesEnVecteurs()
+void MagneticSimulation::convertMatricesToVectors()
 {
-    matricePermittivite.transposeInPlace();
-    matricePermittivite.resize(scene.resolutionTotal(), 1);
-    matriceDensiteCourant.transposeInPlace();
-    matriceDensiteCourant.resize(scene.resolutionTotal(), 1);
-    matriceDeriveeZ.transposeInPlace();
-    matriceDeriveeZ.resize(scene.resolutionTotal(), 1);
-    matriceDeriveeR.transposeInPlace();
-    matriceDeriveeR.resize(scene.resolutionTotal(), 1);
+    m_matPermeability.transposeInPlace();
+    m_matPermeability.resize(m_scene.resolutionTotal(), 1);
+    m_matCurrentDensity.transposeInPlace();
+    m_matCurrentDensity.resize(m_scene.resolutionTotal(), 1);
+    m_matDerZ.transposeInPlace();
+    m_matDerZ.resize(m_scene.resolutionTotal(), 1);
+    m_matDerR.transposeInPlace();
+    m_matDerR.resize(m_scene.resolutionTotal(), 1);
 }
 
-void MagneticSimulation::transformerVecteurSolutionEnMatrice()
+void MagneticSimulation::convertSolutionToMatrix()
 {
-    vecteurSolution.resize(scene.resolutionWidth(), scene.resolutionHeight());
-    vecteurSolution.transposeInPlace();
+    m_vecSolution.resize(m_scene.resolutionWidth(), m_scene.resolutionHeight());
+    m_vecSolution.transposeInPlace();
 
     // Transpose back to matrices
-    matricePermittivite.resize(scene.resolutionWidth(), scene.resolutionHeight());
-    matricePermittivite.transposeInPlace();
-    matriceDensiteCourant.resize(scene.resolutionWidth(), scene.resolutionHeight());
-    matriceDensiteCourant.transposeInPlace();
+    m_matPermeability.resize(m_scene.resolutionWidth(), m_scene.resolutionHeight());
+    m_matPermeability.transposeInPlace();
+    m_matCurrentDensity.resize(m_scene.resolutionWidth(), m_scene.resolutionHeight());
+    m_matCurrentDensity.transposeInPlace();
 }
 
-void MagneticSimulation::preparerSolveur()
+void MagneticSimulation::prepareSolver()
 {
     // Resolution constants
-    const int rows = scene.resolutionHeight();
-    const int cols = scene.resolutionWidth();
+    const int rows = m_scene.resolutionHeight();
+    const int cols = m_scene.resolutionWidth();
     const int nbCells = rows * cols;
 
     // Dimension constants: h: step size on axis r, k: step size on axis z
-    const double h = scene.getPas();
-    const double k = scene.getPas();
-    const double hSq = scene.getSqPas();
-    const double kSq = scene.getSqPas();
+    const double h = m_scene.getStep();
+    const double k = m_scene.getStep();
+    const double hSq = m_scene.getSqStep();
+    const double kSq = m_scene.getSqStep();
 
-    //on initialise les vecteurs dont nous auront besoin pour remplir la matrice principale
+    // Initialize vectors needed for the solver
     Eigen::VectorXd vecAlpha = Eigen::VectorXd::Constant(nbCells, 0);
     Eigen::VectorXd vecBeta = Eigen::VectorXd::Constant(nbCells, 0);
     Eigen::VectorXd vecGamma = Eigen::VectorXd::Constant(nbCells, 0);
@@ -245,9 +266,9 @@ void MagneticSimulation::preparerSolveur()
 	    {
 		    const int n = cols * i + j;
 
-		    vecAlpha(n + 1) = ((1.0 + 1.0 / (2 * j)) / hSq) + matriceDeriveeR(n, 0) / (2.0 * h) / matricePermittivite(n, 0);
-		    vecBeta(n - 1) = ((1.0 - 1.0 / (2 * j)) / hSq) - matriceDeriveeR(n, 0) / (2.0 * h) / matricePermittivite(n, 0);
-		    vecGamma(n) = (-2.0 / hSq - 2.0 / kSq - 1.0 / (j * j * hSq)) + matriceDeriveeR(n, 0) / (j * h) / matricePermittivite(n, 0);
+		    vecAlpha(n + 1) = ((1.0 + 1.0 / (2 * j)) / hSq) + m_matDerR(n, 0) / (2.0 * h) / m_matPermeability(n, 0);
+		    vecBeta(n - 1) = ((1.0 - 1.0 / (2 * j)) / hSq) - m_matDerR(n, 0) / (2.0 * h) / m_matPermeability(n, 0);
+		    vecGamma(n) = (-2.0 / hSq - 2.0 / kSq - 1.0 / (j * j * hSq)) + m_matDerR(n, 0) / (j * h) / m_matPermeability(n, 0);
 
 	    	if (j == 1)
 		    {
@@ -264,7 +285,7 @@ void MagneticSimulation::preparerSolveur()
 	    {
 		    const int n = cols * i + j;
 
-		    vecDelta2(n) = 1.0 / kSq + matriceDeriveeZ(n - cols, 0) / (2 * k) / matricePermittivite(n - cols, 0);
+		    vecDelta2(n) = 1.0 / kSq + m_matDerZ(n - cols, 0) / (2 * k) / m_matPermeability(n - cols, 0);
 
 	    	if (j == 0)
 		    {
@@ -279,7 +300,7 @@ void MagneticSimulation::preparerSolveur()
 	    {
 		    const int n = cols * i + j;
 
-		    vecDelta1(n) = 1.0 / kSq - matriceDeriveeZ(n + cols, 0) / (2 * k) / matricePermittivite(n + cols, 0);
+		    vecDelta1(n) = 1.0 / kSq - m_matDerZ(n + cols, 0) / (2 * k) / m_matPermeability(n + cols, 0);
 
 	    	if (j == 0)
 		    {
@@ -288,128 +309,140 @@ void MagneticSimulation::preparerSolveur()
 	    }
     }
 
-    solveur.generatePrincipalMatrix(vecAlpha, vecBeta, vecGamma, vecDelta1, vecDelta2);
+    m_solver.generatePrincipalMatrix(vecAlpha, vecBeta, vecGamma, vecDelta1, vecDelta2);
 }
 
 
-void MagneticSimulation::calculVecteurSecondMembre()
+void MagneticSimulation::computeSecondColumnVector()
 {
-    for (int i = 0;i < scene.resolutionTotal();i++) {
-        vecteurSecondMembre(i) = -matriceDensiteCourant(i, 0) / matricePermittivite(i, 0);
-    }
+	for (int i = 0; i < m_scene.resolutionTotal(); i++)
+	{
+		m_vecSecondColumn(i) = -m_matCurrentDensity(i, 0) / m_matPermeability(i, 0);
+	}
 }
 
-void MagneticSimulation::calculSolution()
+void MagneticSimulation::computeSolution()
 {
-    const auto start_time = std::chrono::steady_clock::now();
-    vecteurSolution = solveur.computeSolution(vecteurSecondMembre);
-    const auto end_time = std::chrono::steady_clock::now();
+    const auto startTime = std::chrono::steady_clock::now();
+    m_vecSolution = m_solver.computeSolution(m_vecSecondColumn);
+    const auto endTime = std::chrono::steady_clock::now();
 
-    spdlog::info("solving time: {} ms", std::chrono::duration<double, std::milli>(end_time - start_time).count());
+    spdlog::info("solving time: {} ms", std::chrono::duration<double, std::milli>(endTime - startTime).count());
 }
 
-void MagneticSimulation::calculChampB()
+void MagneticSimulation::computeMagneticField()
 {
     // Resolution constants
-    const int rows = scene.resolutionHeight();
-    const int cols = scene.resolutionWidth();
+    const int rows = m_scene.resolutionHeight();
+    const int cols = m_scene.resolutionWidth();
 
     // Dimension constants: h: step size on axis r, k: step size on axis z
-    const double h = scene.getPas();
-    const double k = scene.getPas();
+    const double h = m_scene.getStep();
+    const double k = m_scene.getStep();
 
-    //on rempli le milieu par B = rot(A).
-    for (int i = 1;i < rows - 1;i++)
+    // The center of the matrices Br and Bz are equal to B = rot(A).
+    for (int i = 1; i < rows - 1; i++)
     {
-        for (int j = 1;j < cols - 1;j++)
-        {
-            matriceBz(i, j) = vecteurSolution(i, j) / (h * j) + (vecteurSolution(i, j + 1) - vecteurSolution(i, j - 1)) / (2.0 * h);
-            matriceBr(i, j) = (-vecteurSolution(i + 1, j) + vecteurSolution(i - 1, j)) / (2.0 * k);
-        }
+	    for (int j = 1; j < cols - 1; j++)
+	    {
+		    m_matBz(i, j) = m_vecSolution(i, j) / (h * j) + (m_vecSolution(i, j + 1) - m_vecSolution(i, j - 1)) / (2.0 * h);
+		    m_matBr(i, j) = (-m_vecSolution(i + 1, j) + m_vecSolution(i - 1, j)) / (2.0 * k);
+	    }
     }
 
-    //on remplis les bords.
-    for (int i = 0;i < rows;i++)
+    // Take care of boundaries
+    for (int i = 0; i < rows; i++)
     {
-        matriceBz(i, 0) = matriceBz(i, 1);
-        matriceBr(i, 0) = matriceBr(i, 1);
-        matriceBz(i, cols - 1) = matriceBz(i, cols - 2);
-        matriceBr(i, cols - 1) = matriceBr(i, cols - 2);
+	    m_matBz(i, 0) = m_matBz(i, 1);
+	    m_matBr(i, 0) = m_matBr(i, 1);
+	    m_matBz(i, cols - 1) = m_matBz(i, cols - 2);
+	    m_matBr(i, cols - 1) = m_matBr(i, cols - 2);
     }
 
-    for (int j = 0;j < cols;j++)
+    for (int j = 0; j < cols; j++)
     {
-        matriceBz(0, j) = matriceBz(1, j);
-        matriceBr(0, j) = matriceBr(1, j);
-        matriceBz(rows - 1, j) = matriceBz(rows - 2, j);
-        matriceBr(rows - 1, j) = matriceBr(rows - 2, j);
+	    m_matBz(0, j) = m_matBz(1, j);
+	    m_matBr(0, j) = m_matBr(1, j);
+	    m_matBz(rows - 1, j) = m_matBz(rows - 2, j);
+	    m_matBr(rows - 1, j) = m_matBr(rows - 2, j);
     }
 
-    //on calcule le champ B avec la norme des vecteurs Br et Bz.
-    for (int i = 0;i < rows;i++)
+    // Compute the magnitude of the magnetic field
+    for (int i = 0; i < rows; i++)
     {
-        for (int j = 0;j < cols;j++)
-        {
-            matriceB(i, j) = sqrt(pow(matriceBr(i, j), 2) + pow(matriceBz(i, j), 2));
-        }
+	    for (int j = 0; j < cols; j++)
+	    {
+		    m_matB(i, j) = std::sqrt(std::pow(m_matBr(i, j), 2) + std::pow(m_matBz(i, j), 2));
+	    }
     }
 }
 
 
-Eigen::MatrixXd MagneticSimulation::symetriqueMatrice(const Eigen::MatrixXd &solution, const double coefficient)
+Eigen::MatrixXd MagneticSimulation::matrixSymmetric(const Eigen::MatrixXd& matrix, double coefficient) const
 {
-    Eigen::MatrixXd solutionSymetrique = Eigen::MatrixXd::Constant(scene.resolutionHeight(), 2*scene.resolutionWidth() - 1, 0);
-    //dans la partie de droite on recopie la matrice solution
-    for (int i = 0;i < scene.resolutionHeight();i++) {
-        for (int j = scene.resolutionWidth() - 1;j < 2*scene.resolutionWidth() - 1;j++) {
-            solutionSymetrique(i, j) = solution(i, j-scene.resolutionWidth()+1);
-        }
-    }
-    //dans la partie gauche on recopie l'oppose de la matrice
-    for (int i = 0;i < scene.resolutionHeight();i++) {
-        for (int j = 0;j < scene.resolutionWidth() - 1;j++) {
-            solutionSymetrique(i, j) = coefficient * solution(i, scene.resolutionWidth() - 1 - j);
-        }
-    }
-    return solutionSymetrique;
+	Eigen::MatrixXd matrixSym = Eigen::MatrixXd::Constant(m_scene.resolutionHeight(),
+	                                                      2 * m_scene.resolutionWidth() - 1,
+	                                                      0);
+
+	// On the right part, we simply copy the matrix
+	for (int i = 0; i < m_scene.resolutionHeight(); i++)
+	{
+		for (int j = m_scene.resolutionWidth() - 1; j < 2 * m_scene.resolutionWidth() - 1; j++)
+		{
+			matrixSym(i, j) = matrix(i, j - m_scene.resolutionWidth() + 1);
+		}
+	}
+
+	// On the left part, we copy the opposite of the matrix
+	for (int i = 0; i < m_scene.resolutionHeight(); i++)
+	{
+		for (int j = 0; j < m_scene.resolutionWidth() - 1; j++)
+		{
+			matrixSym(i, j) = coefficient * matrix(i, m_scene.resolutionWidth() - 1 - j);
+		}
+	}
+
+	return matrixSym;
 }
 
-void MagneticSimulation::enregistrerResultats(
+void MagneticSimulation::saveResults(
     const QString& fichierMatriceA,
     const QString& fichierMatriceBr,
     const QString& fichierMatriceBz,
     const QString& fichierMatriceB,
     const QString& fileMatrixAWithContour)
 {
-    Eigen::MatrixXd matriceAEspace = symetriqueMatrice(vecteurSolution, -1.0);
-    Eigen::MatrixXd matriceBrEspace = symetriqueMatrice(matriceBr, -1.0);
-    Eigen::MatrixXd matriceBzEspace = symetriqueMatrice(matriceBz, 1.0);
-    Eigen::MatrixXd matriceBEspace = symetriqueMatrice(matriceB, 1.0);
-    exportScalarMatrixImage(fichierMatriceA, matriceAEspace, ImageScalingStrategy::ZeroCentered);
-    exportScalarMatrixImage(fichierMatriceBr, matriceBrEspace, ImageScalingStrategy::ZeroCentered);
-    exportScalarMatrixImage(fichierMatriceBz, matriceBzEspace, ImageScalingStrategy::ZeroCentered);
-    exportScalarMatrixImage(fichierMatriceB, matriceBEspace, ImageScalingStrategy::ZeroMinimum);
+    const auto matrixAFull = matrixSymmetric(m_vecSolution, -1.0);
+    const auto matrixBrFull = matrixSymmetric(m_matBr, -1.0);
+    const auto matrixBzFull = matrixSymmetric(m_matBz, 1.0);
+    const auto matrixBFull = matrixSymmetric(m_matB, 1.0);
+
+    exportScalarMatrixImage(fichierMatriceA, matrixAFull, ImageScalingStrategy::ZeroCentered);
+    exportScalarMatrixImage(fichierMatriceBr, matrixBrFull, ImageScalingStrategy::ZeroCentered);
+    exportScalarMatrixImage(fichierMatriceBz, matrixBzFull, ImageScalingStrategy::ZeroCentered);
+    exportScalarMatrixImage(fichierMatriceB, matrixBFull, ImageScalingStrategy::ZeroMinimum);
 
     exportScalarMatrixWithSceneImage(fileMatrixAWithContour,
-                                     matriceAEspace,
+                                     matrixAFull,
                                      ImageScalingStrategy::ZeroCentered,
-                                     scene,
-                                     scene.resolutionWidth());
+                                     m_scene,
+                                     m_scene.resolutionWidth());
 
-    //on enregistre le vecteur
-    std::ofstream fichier("matricebcentre.txt", std::ios::out | std::ios::trunc);
-    if(fichier)
+    // Save the values of the magnetic field on the line r=0.0
+    std::ofstream file("matrixbcenter.txt", std::ios::out | std::ios::trunc);
+
+    if(file)
     {
-        for (int i = 0;i < scene.resolutionHeight();i++)
+        for (int i = 0;i < m_scene.resolutionHeight();i++)
         {
-            fichier << matriceB(i, 0) << std::endl;
+            file << m_matB(i, 0) << std::endl;
         }
-        fichier.close();
+        file.close();
     }
 
     // Output matrices in VTK format
-    exportScalarMatrixVtk("mu.vtk", matricePermittivite, scene.getPas(), scene.getPas());
-    exportScalarMatrixVtk("i.vtk", matriceDensiteCourant, scene.getPas(), scene.getPas());
-	exportScalarMatrixVtk("a.vtk", vecteurSolution, scene.getPas(), scene.getPas());
-    exportVectorMatrixVtk("b.vtk", matriceBr, matriceBz, scene.getPas(), scene.getPas());
+    exportScalarMatrixVtk("mu.vtk", m_matPermeability, m_scene.getStep(), m_scene.getStep());
+    exportScalarMatrixVtk("i.vtk", m_matCurrentDensity, m_scene.getStep(), m_scene.getStep());
+	exportScalarMatrixVtk("a.vtk", m_vecSolution, m_scene.getStep(), m_scene.getStep());
+    exportVectorMatrixVtk("b.vtk", m_matBr, m_matBz, m_scene.getStep(), m_scene.getStep());
 }

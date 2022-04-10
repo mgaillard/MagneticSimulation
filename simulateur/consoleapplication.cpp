@@ -8,7 +8,7 @@ ConsoleApplication::ConsoleApplication(ConsoleApplicationParameters parameters, 
 	QObject(parent),
 	m_parameters(std::move(parameters))
 {
-
+	spdlog::set_level(spdlog::level::trace);
 }
 
 void ConsoleApplication::exec()
@@ -28,15 +28,15 @@ bool ConsoleApplication::run() const
 {
 	MagneticSimulation sim(m_parameters.inputFile);
 
-	if (sim.validationSimulation())
+	if (sim.checkValid())
 	{
-		sim.simuler();
+		sim.runSimulation();
 
-		sim.enregistrerResultats(QString("matriceA.png"),
-		                         QString("matriceBr.png"),
-		                         QString("matriceBz.png"),
-		                         QString("matriceB.png"),
-								 QString("matriceAcontour.png"));
+		sim.saveResults("matriceA.png",
+		                "matriceBr.png",
+		                "matriceBz.png",
+		                "matriceB.png",
+		                "matriceAcontour.png");
 	}
 
 	return true;

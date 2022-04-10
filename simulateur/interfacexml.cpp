@@ -86,7 +86,7 @@ Scene InterfaceXml::loadScene(const QDomElement& elScene)
     {
         const QRect rectangleScene(x, y, width, height);
         scene.setRectangleScene(rectangleScene);
-        scene.setPas(pas);
+        scene.setStep(pas);
     }
     else
     {
