@@ -36,7 +36,7 @@ bool ConsoleApplication::run() const
 		                         QString("matriceBr.png"),
 		                         QString("matriceBz.png"),
 		                         QString("matriceB.png"),
-								 QString("matriceBscene.png"));
+								 QString("matriceAcontour.png"));
 	}
 
 	return true;

@@ -3,6 +3,10 @@
 #include <QImage>
 #include <QPainter>
 
+#include <spdlog/spdlog.h>
+
+#include "contour.h"
+
 // ---------------------------------------- Private functions ----------------------------------------
 
 /**
@@ -120,6 +124,7 @@ bool exportScalarMatrixWithSceneImage(
 
 	QPainter painter;
 	painter.begin(&image);
+	painter.setRenderHint(QPainter::Antialiasing, true);
 	
 	for (const auto& shape : scene.getShapes())
 	{
@@ -135,6 +140,42 @@ bool exportScalarMatrixWithSceneImage(
 		}
 
 		shape->draw(painter, offsetX, 0);
+	}
+
+	// TODO: add contour definition in XML
+	// Generate 10 iso-values for contours based on minimum/maximum
+	Contour contours;
+	const auto minimum = matrix.minCoeff();
+	const auto maximum = matrix.maxCoeff();
+	constexpr int nbContours = 10;
+	// Exclude the minimum contour and the maximum contour, because it does not make sense to show them
+	for (int i = 1; i < nbContours - 1; i++)
+	{
+		const auto t = static_cast<double>(i) / (nbContours - 1);
+		const double kLog = minimum + t * (maximum - minimum);
+		contours.addContour(matrix, kLog);
+	}
+
+	// For contours we use white pen with width 1
+	painter.setPen(QPen(QColor(255, 255, 255), 1, Qt::SolidLine));
+
+	const auto contourPoints = contours.points();
+	for (const auto& curve : contours.curves())
+	{
+		for (unsigned int i = 1; i < curve.size(); i++)
+		{
+			const QPointF start(
+				contourPoints[curve[i - 1]].y(),
+				contourPoints[curve[i - 1]].x()
+			);
+
+			const QPointF end(
+				contourPoints[curve[i]].y(),
+				contourPoints[curve[i]].x()
+			);
+
+			painter.drawLine(start, end);
+		}
 	}
 
 	painter.end();

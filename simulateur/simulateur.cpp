@@ -379,7 +379,7 @@ void Simulateur::enregistrerResultats(
     const QString& fichierMatriceBr,
     const QString& fichierMatriceBz,
     const QString& fichierMatriceB,
-    const QString& fileMatrixBWithScene)
+    const QString& fileMatrixAWithContour)
 {
     Eigen::MatrixXd matriceAEspace = symetriqueMatrice(vecteurSolution, -1.0);
     Eigen::MatrixXd matriceBrEspace = symetriqueMatrice(matriceBr, -1.0);
@@ -390,9 +390,9 @@ void Simulateur::enregistrerResultats(
     exportScalarMatrixImage(fichierMatriceBz, matriceBzEspace, ImageScalingStrategy::ZeroCentered);
     exportScalarMatrixImage(fichierMatriceB, matriceBEspace, ImageScalingStrategy::ZeroMinimum);
 
-    exportScalarMatrixWithSceneImage(fileMatrixBWithScene,
-                                     matriceBEspace,
-                                     ImageScalingStrategy::ZeroMinimum,
+    exportScalarMatrixWithSceneImage(fileMatrixAWithContour,
+                                     matriceAEspace,
+                                     ImageScalingStrategy::ZeroCentered,
                                      scene,
                                      scene.resolutionWidth());
 

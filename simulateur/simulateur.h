@@ -37,7 +37,7 @@ public:
                               const QString& fichierMatriceBr,
                               const QString& fichierMatriceBz,
                               const QString& fichierMatriceB,
-                              const QString& fileMatrixBWithScene);
+                              const QString& fileMatrixAWithContour);
 private:
     Scene scene;
     //variables de la simulation
