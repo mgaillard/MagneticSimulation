@@ -1,4 +1,4 @@
-#include "simulateur.h"
+#include "magneticsimulation.h"
 
 #include <chrono>
 
@@ -8,13 +8,13 @@
 #include "export_image.h"
 #include "export_vtk.h"
 
-Simulateur::Simulateur(const QString& filename)
+MagneticSimulation::MagneticSimulation(const QString& filename)
 {
     // Load simulation definition file
     scene = InterfaceXml::loadFile(filename);
 }
 
-void Simulateur::initialiser()
+void MagneticSimulation::initialiser()
 {
     //on initialise les matrices
     matricePermittivite = Eigen::MatrixXd::Constant(scene.resolutionHeight(), scene.resolutionWidth(), constants::mu_0);
@@ -29,7 +29,7 @@ void Simulateur::initialiser()
     solveur.setSize(scene.resolutionHeight(), scene.resolutionWidth());
 }
 
-bool Simulateur::validationSimulation() const
+bool MagneticSimulation::validationSimulation() const
 {
     // Check that there is at least one shape in the simulation
     if (scene.getShapes().size() <= 0)
@@ -40,7 +40,7 @@ bool Simulateur::validationSimulation() const
     return true;
 }
 
-void Simulateur::simuler()
+void MagneticSimulation::simuler()
 {
     initialiser();
 	remplirMatricePermittivite();
@@ -55,7 +55,7 @@ void Simulateur::simuler()
     calculChampB();
 }
 
-void Simulateur::remplirMatricePermittivite()
+void MagneticSimulation::remplirMatricePermittivite()
 {
     const int nbLigne = scene.resolutionHeight();
     const int nbColonne = scene.resolutionWidth();
@@ -88,7 +88,7 @@ void Simulateur::remplirMatricePermittivite()
     }
 }
 
-void Simulateur::lissageMatricePermittivite()
+void MagneticSimulation::lissageMatricePermittivite()
 {
     //on rempli la matrice de filtrage gaussienne
     const int tailleFiltre = 10;
@@ -145,7 +145,7 @@ void Simulateur::lissageMatricePermittivite()
     matricePermittivite = nouvelleMatricePermittivite;
 }
 
-void Simulateur::remplirMatriceDensiteCourant()
+void MagneticSimulation::remplirMatriceDensiteCourant()
 {
     const int rows = scene.resolutionHeight();
     const int cols = scene.resolutionWidth();
@@ -182,7 +182,7 @@ void Simulateur::remplirMatriceDensiteCourant()
     }
 }
 
-void Simulateur::calculMatricesDerivees()
+void MagneticSimulation::calculMatricesDerivees()
 {
     int nbLigne = scene.resolutionHeight();
     int nbColonne = scene.resolutionWidth();
@@ -195,7 +195,7 @@ void Simulateur::calculMatricesDerivees()
 }
 
 
-void Simulateur::transformerMatricesEnVecteurs()
+void MagneticSimulation::transformerMatricesEnVecteurs()
 {
     matricePermittivite.transposeInPlace();
     matricePermittivite.resize(scene.resolutionTotal(), 1);
@@ -207,7 +207,7 @@ void Simulateur::transformerMatricesEnVecteurs()
     matriceDeriveeR.resize(scene.resolutionTotal(), 1);
 }
 
-void Simulateur::transformerVecteurSolutionEnMatrice()
+void MagneticSimulation::transformerVecteurSolutionEnMatrice()
 {
     vecteurSolution.resize(scene.resolutionWidth(), scene.resolutionHeight());
     vecteurSolution.transposeInPlace();
@@ -219,7 +219,7 @@ void Simulateur::transformerVecteurSolutionEnMatrice()
     matriceDensiteCourant.transposeInPlace();
 }
 
-void Simulateur::preparerSolveur()
+void MagneticSimulation::preparerSolveur()
 {
     // Resolution constants
     const int rows = scene.resolutionHeight();
@@ -292,14 +292,14 @@ void Simulateur::preparerSolveur()
 }
 
 
-void Simulateur::calculVecteurSecondMembre()
+void MagneticSimulation::calculVecteurSecondMembre()
 {
     for (int i = 0;i < scene.resolutionTotal();i++) {
         vecteurSecondMembre(i) = -matriceDensiteCourant(i, 0) / matricePermittivite(i, 0);
     }
 }
 
-void Simulateur::calculSolution()
+void MagneticSimulation::calculSolution()
 {
     const auto start_time = std::chrono::steady_clock::now();
     vecteurSolution = solveur.computeSolution(vecteurSecondMembre);
@@ -308,7 +308,7 @@ void Simulateur::calculSolution()
     spdlog::info("solving time: {} ms", std::chrono::duration<double, std::milli>(end_time - start_time).count());
 }
 
-void Simulateur::calculChampB()
+void MagneticSimulation::calculChampB()
 {
     // Resolution constants
     const int rows = scene.resolutionHeight();
@@ -356,7 +356,7 @@ void Simulateur::calculChampB()
 }
 
 
-Eigen::MatrixXd Simulateur::symetriqueMatrice(const Eigen::MatrixXd &solution, const double coefficient)
+Eigen::MatrixXd MagneticSimulation::symetriqueMatrice(const Eigen::MatrixXd &solution, const double coefficient)
 {
     Eigen::MatrixXd solutionSymetrique = Eigen::MatrixXd::Constant(scene.resolutionHeight(), 2*scene.resolutionWidth() - 1, 0);
     //dans la partie de droite on recopie la matrice solution
@@ -374,7 +374,7 @@ Eigen::MatrixXd Simulateur::symetriqueMatrice(const Eigen::MatrixXd &solution, c
     return solutionSymetrique;
 }
 
-void Simulateur::enregistrerResultats(
+void MagneticSimulation::enregistrerResultats(
     const QString& fichierMatriceA,
     const QString& fichierMatriceBr,
     const QString& fichierMatriceBz,

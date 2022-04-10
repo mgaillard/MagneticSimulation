@@ -2,7 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include "simulateur.h"
+#include "magneticsimulation.h"
 
 ConsoleApplication::ConsoleApplication(ConsoleApplicationParameters parameters, QObject* parent) :
 	QObject(parent),
@@ -26,7 +26,7 @@ void ConsoleApplication::exec()
 
 bool ConsoleApplication::run() const
 {
-	Simulateur sim(m_parameters.inputFile);
+	MagneticSimulation sim(m_parameters.inputFile);
 
 	if (sim.validationSimulation())
 	{

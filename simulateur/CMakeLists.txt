@@ -11,11 +11,11 @@ set(HEADER_FILES
     export_image.h
     export_vtk.h
     interfacexml.h
+    magneticsimulation.h
     scene.h
     shape.h
     shapecircle.h
     shapepolygon.h
-    simulateur.h
     solver.h
     solvercolpivhouseholderqr.h
     solverdense.h
@@ -30,12 +30,11 @@ set(SRC_FILES
     export_vtk.cpp
     interfacexml.cpp
     main.cpp
+    magneticsimulation.cpp
     scene.cpp
     shape.cpp
     shapecircle.cpp
     shapepolygon.cpp
-    simulateur.cpp
-    simulateur.cpp
     solver.cpp
     solvercolpivhouseholderqr.cpp
     solverdense.cpp

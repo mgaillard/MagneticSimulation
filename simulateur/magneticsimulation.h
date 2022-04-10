@@ -1,24 +1,21 @@
-#ifndef SIMULATEUR_H
-#define SIMULATEUR_H
+#pragma once
 
 #include <QString>
 #include <Eigen/Eigen>
 #include <QList>
 #include <algorithm>
-#include <math.h>
+#include <cmath>
 #include <fstream>
 
 #include "scene.h"
-#include "shape.h"
-#include "ShapeCircle.h"
 #include "interfacexml.h"
 #include "solversparselu.h"
 #include "solvercolpivhouseholderqr.h"
 
-class Simulateur
+class MagneticSimulation
 {
 public:
-    Simulateur(const QString& filename);
+    MagneticSimulation(const QString& filename);
     void initialiser();
     bool validationSimulation() const;
     void simuler();
@@ -52,5 +49,3 @@ private:
     Eigen::MatrixXd matriceB;
     SolverSparseLU solveur;
 };
-
-#endif // SIMULATEUR_H
