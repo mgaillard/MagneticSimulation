@@ -2,7 +2,7 @@
 Axis symmetric simulation of magnetic field using finite differences.
 
 ## TODO
-- Contour lines of the magnetic field
+- Streamlines of the magnetic field
 - Add screenshots to the Readme
 - Output the plot of the magnetic field on the line r=0.0
 - Add default visualizations in Paraview
