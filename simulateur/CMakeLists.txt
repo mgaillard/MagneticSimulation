@@ -7,6 +7,7 @@ message(STATUS "Creating target 'MagneticSimulation'")
 set(HEADER_FILES
     constants.h
     consoleapplication.h
+    contour.h
     export_image.h
     export_vtk.h
     interfacexml.h
@@ -24,6 +25,7 @@ set(HEADER_FILES
 
 set(SRC_FILES
     consoleapplication.cpp
+    contour.cpp
     export_image.cpp
     export_vtk.cpp
     interfacexml.cpp
