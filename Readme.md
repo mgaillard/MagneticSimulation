@@ -4,6 +4,7 @@ Axis symmetric simulation of magnetic field using finite differences.
 ## TODO
 - Streamlines of the magnetic field
 - Animation with interpolation of a parameter between two values
+- Procedural shape with interpolation for animation
 - Add screenshots to the Readme
 - Add default visualizations in Paraview
 - Split as a lib (Eigen-only), console App (Qt), and test project (Catch2).

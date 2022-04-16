@@ -36,7 +36,8 @@ bool ConsoleApplication::run() const
 		                "matriceBr.png",
 		                "matriceBz.png",
 		                "matriceB.png",
-		                "matriceAcontour.png");
+		                "matriceAcontour.png",
+		                "matriceBstreamlines.png");
 	}
 
 	return true;

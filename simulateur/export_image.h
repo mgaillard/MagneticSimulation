@@ -39,3 +39,10 @@ bool exportScalarMatrixWithSceneImage(const QString& filename,
                                       const ImageScalingStrategy& strategy,
                                       const Scene& scene,
 									  int offsetX);
+
+bool exportScalarMatrixWithStreamlines(const QString& filename,
+                                       const Eigen::MatrixXd& matB,
+                                       const Eigen::MatrixXd& matBr,
+                                       const Eigen::MatrixXd& matBz,
+                                       const ImageScalingStrategy& strategy,
+								       const Scene& scene);

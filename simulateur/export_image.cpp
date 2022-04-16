@@ -6,6 +6,7 @@
 #include <spdlog/spdlog.h>
 
 #include "contour.h"
+#include "streamlines.h"
 
 // ---------------------------------------- Private functions ----------------------------------------
 
@@ -152,8 +153,8 @@ bool exportScalarMatrixWithSceneImage(
 	for (int i = 1; i < nbContours - 1; i++)
 	{
 		const auto t = static_cast<double>(i) / (nbContours - 1);
-		const double kLog = minimum + t * (maximum - minimum);
-		contours.addContour(matrix, kLog);
+		const double k = minimum + t * (maximum - minimum);
+		contours.addContour(matrix, k);
 	}
 
 	// For contours we use white pen with width 1
@@ -173,6 +174,66 @@ bool exportScalarMatrixWithSceneImage(
 				contourPoints[curve[i]].y(),
 				contourPoints[curve[i]].x()
 			);
+
+			painter.drawLine(start, end);
+		}
+	}
+
+	painter.end();
+
+	return image.save(filename);
+}
+
+bool exportScalarMatrixWithStreamlines(
+	const QString& filename,
+	const Eigen::MatrixXd& matB,
+	const Eigen::MatrixXd& matBr,
+	const Eigen::MatrixXd& matBz,
+	const ImageScalingStrategy& strategy,
+	const Scene& scene)
+{
+	// The background image is the export of the matrix
+	auto image = generateScalarMatrixImage(matB, strategy);
+
+	QPainter painter;
+	painter.begin(&image);
+	painter.setRenderHint(QPainter::Antialiasing, true);
+
+
+	StreamlinesPlacement streamlinesPlacement(scene, matBr, matBz);
+	// Middle of the scene
+	const auto minimum = scene.convertFromGridCoords({
+		scene.resolutionWidth() / 2,
+		scene.resolutionHeight() / 2
+	});
+	// Right of the scene
+	const auto maximum = scene.convertFromGridCoords({
+		scene.resolutionWidth(),
+		scene.resolutionHeight() / 2
+	});
+	constexpr int nbStreamlines = 10;
+	// Exclude the minimum streamline and the maximum streamline, because it does not make sense to show them
+	for (int i = 1; i < nbStreamlines - 1; i++)
+	{
+		const auto t = static_cast<double>(i) / (nbStreamlines - 1);
+		const auto seed = minimum + t * (maximum - minimum);
+		streamlinesPlacement.placeStreamline(seed);
+	}
+
+	// For contours we use white pen with width 1
+	painter.setPen(QPen(QColor(255, 255, 255), 1, Qt::SolidLine));
+	
+	for (int i = 0; i < streamlinesPlacement.nbStreamlines(); i++)
+	{
+		const auto& streamline = streamlinesPlacement.streamline(i);
+
+		for (unsigned int j = 1; j < streamline.size(); j++)
+		{
+			const auto startGrid = scene.convertToGridCoords(streamline[j - 1]);
+			const auto endGrid = scene.convertToGridCoords(streamline[j]);
+
+			const QPointF start(startGrid.x(), startGrid.y());
+			const QPointF end(endGrid.x(), endGrid.y());
 
 			painter.drawLine(start, end);
 		}

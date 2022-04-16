@@ -21,6 +21,7 @@ set(HEADER_FILES
     solverdense.h
     solversparse.h
     solversparselu.h
+    streamlines.h
 )
 
 set(SRC_FILES
@@ -40,6 +41,7 @@ set(SRC_FILES
     solverdense.cpp
     solversparse.cpp
     solversparselu.cpp
+    streamlines.cpp
 )
 
 # Setup filters in Visual Studio

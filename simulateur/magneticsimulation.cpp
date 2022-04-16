@@ -410,7 +410,8 @@ void MagneticSimulation::saveResults(
     const QString& fichierMatriceBr,
     const QString& fichierMatriceBz,
     const QString& fichierMatriceB,
-    const QString& fileMatrixAWithContour)
+    const QString& fileMatrixAWithContour,
+    const QString& fileMatrixBWithStreamlines)
 {
     const auto matrixAFull = matrixSymmetric(m_vecSolution, -1.0);
     const auto matrixBrFull = matrixSymmetric(m_matBr, -1.0);
@@ -423,10 +424,17 @@ void MagneticSimulation::saveResults(
     exportScalarMatrixImage(fichierMatriceB, matrixBFull, ImageScalingStrategy::ZeroMinimum);
 
     exportScalarMatrixWithSceneImage(fileMatrixAWithContour,
-                                     matrixAFull,
+                                     m_vecSolution,
                                      ImageScalingStrategy::ZeroCentered,
                                      m_scene,
-                                     m_scene.resolutionWidth());
+                                     0);
+
+    exportScalarMatrixWithStreamlines(fileMatrixBWithStreamlines,
+                                      m_matB,
+                                      m_matBr,
+                                      m_matBz,
+                                      ImageScalingStrategy::ZeroMinimum,
+                                      m_scene);
 
     // Save the values of the magnetic field on the line r=0.0
     std::ofstream file("matrixbcenter.txt", std::ios::out | std::ios::trunc);

@@ -22,7 +22,8 @@ public:
                      const QString& fichierMatriceBr,
                      const QString& fichierMatriceBz,
                      const QString& fichierMatriceB,
-                     const QString& fileMatrixAWithContour);
+                     const QString& fileMatrixAWithContour,
+                     const QString& fileMatrixBWithStreamlines);
 private:
 
     void initialize();
