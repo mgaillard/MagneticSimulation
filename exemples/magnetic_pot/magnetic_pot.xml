@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<scene>
+    <pas>0.0001</pas>
+    <hauteurscene>1000</hauteurscene>
+    <largeurscene>1000</largeurscene>
+    <xscene>0</xscene>
+    <yscene>0</yscene>
+    <formes>
+        <forme type="cercle">
+            <permeabilite>1.0</permeabilite>
+            <courant>1.0</courant>
+            <centrex>300</centrex>
+            <centrey>500</centrey>
+            <rayon>5.0</rayon>
+        </forme>
+        <forme type="polygone">
+            <permeabilite>50.0</permeabilite>
+            <courant>0.0</courant>
+            <centrex>0</centrex>
+            <centrey>100</centrey>
+            <xpoints>
+                <x>0</x>
+                <x>600</x>
+                <x>600</x>
+                <x>100</x>
+                <x>100</x>
+                <x>600</x>
+                <x>600</x>
+                <x>0</x>
+            </xpoints>
+            <ypoints>
+                <y>200</y>
+                <y>200</y>
+                <y>300</y>
+                <y>300</y>
+                <y>700</y>
+                <y>700</y>
+                <y>800</y>
+                <y>800</y>
+            </ypoints>
+        </forme>
+    </formes>
+</scene>
