@@ -1,12 +1,14 @@
 # Magnetic simulation
 Axis symmetric simulation of magnetic field using finite differences.
 
+## Images
+
+![Images of magnetic simulations](images/figure.jpg)
+
 ## TODO
-- Streamlines of the magnetic field
+- More robust streamlines of the magnetic field
 - Animation with interpolation of a parameter between two values
-- Procedural shape with interpolation for animation
-- Add screenshots to the Readme
-- Add default visualizations in Paraview
+- Procedural shape of magnetic pot with interpolation for animation
 - Split as a lib (Eigen-only), console App (Qt), and test project (Catch2).
 - Add a test with a spire and compare to the theory formula
 - Output the plot of the magnetic field on the line r=0.0
