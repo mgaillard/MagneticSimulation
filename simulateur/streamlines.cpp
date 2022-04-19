@@ -110,10 +110,11 @@ void StreamlinesPlacement::placeStreamline(const Eigen::Vector2d& seed)
 			// break;
 		}
 
-		// Distance to the beginning of the streamline
+		// Distance to the previous point in the streamline
 		const auto distToPrevious = (streamline.back() - point).norm();
 
 		// Only add if there is a certain distance from the last point
+		// This prevent the streamline to have a resolution that is too fine
 		if (distToPrevious >= minDistance)
 		{
 			streamline.emplace_back(point);
@@ -146,10 +147,11 @@ void StreamlinesPlacement::placeStreamline(const Eigen::Vector2d& seed)
 			// break;
 		}
 
-		// Distance to the beginning of the streamline
+		// Distance to the previous point in the streamline
 		const auto distToPrevious = (streamline.back() - point).norm();
 
 		// Only add if there is a certain distance from the last point
+		// This prevent the streamline to have a resolution that is too fine
 		if (distToPrevious >= minDistance)
 		{
 			streamline.emplace_back(point);

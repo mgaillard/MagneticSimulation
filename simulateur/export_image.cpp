@@ -203,7 +203,7 @@ bool exportScalarMatrixWithStreamlines(
 	StreamlinesPlacement streamlinesPlacement(scene, matBr, matBz);
 	// Middle of the scene
 	const auto minimum = scene.convertFromGridCoords({
-		scene.resolutionWidth() / 2,
+		0,
 		scene.resolutionHeight() / 2
 	});
 	// Right of the scene
